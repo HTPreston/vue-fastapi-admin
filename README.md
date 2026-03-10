@@ -19,6 +19,9 @@
 #### 🚧 项目启动初始化-后端
 
 ```bash
+# 进入项目
+cd vue-fastapi-admin/backend
+
 # 修改对应的数据库地址，redis 地址
 backend/config.py
 # 或者
