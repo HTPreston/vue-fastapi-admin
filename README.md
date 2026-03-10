@@ -2,7 +2,7 @@
 - 基于 python + fastApi + celery + sqlalchemy + redis
 
 - 使用软件版本
-- python version <= 3.13
+- python version <= 3.10
 - mysql version 8.0.23
 - redis version 6.0.9
 - node version 18.15.0
@@ -59,7 +59,7 @@ v18.15.0
 
 ```bash
 # 进入项目
-cd zerorunner/frontend
+cd vue-fastapi-admin/frontend
 
 # 安装依赖
 cnpm install 
