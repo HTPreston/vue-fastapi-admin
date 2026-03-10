@@ -10,6 +10,7 @@ from app.db import redis_pool
 from app.init.cors import init_cors
 from app.init.exception import init_exception
 from app.init.middleware import init_middleware
+from app.init.mount import init_mount
 from app.init.routers import init_router
 from config import config
 
@@ -17,7 +18,7 @@ from config import config
 @asynccontextmanager
 async def start_app(app: FastAPI):
     """ 注册中心 """
-    # register_mount(app)  # 挂载静态文件
+    init_mount(app)  # 挂载静态文件
     redis_pool.init_by_config(config=config)
     init_logger()
     logger.info("日志初始化成功！！!")  # 初始化日志

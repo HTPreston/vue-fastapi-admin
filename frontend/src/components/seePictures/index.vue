@@ -45,52 +45,87 @@
 </template>
 
 <script setup lang="ts" name="cropper">
-import {reactive, nextTick, ref} from 'vue';
+import {reactive, nextTick, ref, onBeforeUnmount} from 'vue';
 import Cropper from 'cropperjs';
 import 'cropperjs/dist/cropper.css';
 
 const emit = defineEmits(['updateAvatar'])
 
 const AvatarRef = ref()
-// 定义变量内容
 const state = reactive({
   isShowDialog: false,
   cropperImg: '',
-  blobUrl: '',
   cropperImgBase64: '',
-  cropper: '' as RefType,
+  cropper: null as Cropper | null,
 });
 
-// 打开弹窗
 const openDialog = (imgs: string) => {
-  // if (!imgs) {
-  //   return
-  // }
+  /**
+   * 打开头像裁剪弹窗
+   * 
+   * @param {string} imgs - 初始图片URL
+   */
   state.cropperImg = imgs;
   state.isShowDialog = true;
   nextTick(() => {
     initCropper();
   });
 };
-// 关闭弹窗
+
 const closeDialog = () => {
+  /**
+   * 关闭头像裁剪弹窗
+   * 
+   * 销毁cropper实例并隐藏弹窗
+   */
+  destroyCropper();
   state.isShowDialog = false;
 };
-// 取消
+
 const onCancel = () => {
+  /**
+   * 取消操作
+   * 
+   * 关闭弹窗不保存更改
+   */
   closeDialog();
 };
-// 更换
-const onSubmit = () => {
-  state.cropperImgBase64 = state.cropper.getCroppedCanvas().toDataURL('image/jpeg');
-  emit("updateAvatar", state.cropperImgBase64)
 
+const onSubmit = () => {
+  /**
+   * 提交裁剪后的头像
+   * 
+   * 生成裁剪后的图片Base64数据并触发更新事件
+   */
+  if (!state.cropper) {
+    console.error('Cropper instance not initialized');
+    return;
+  }
+  
+  try {
+    state.cropperImgBase64 = state.cropper.getCroppedCanvas().toDataURL('image/jpeg', 0.9);
+    emit("updateAvatar", state.cropperImgBase64);
+    closeDialog();
+  } catch (error) {
+    console.error('Failed to crop image:', error);
+  }
 };
-// 初始化cropperjs图片裁剪
+
 const initCropper = () => {
-  const letImg = <HTMLImageElement>document.getElementById("AvatarRef");
-  console.log(letImg, 'letImg')
-  state.cropper = new Cropper(letImg, {
+  /**
+   * 初始化图片裁剪器
+   * 
+   * 创建Cropper实例并配置裁剪参数
+   */
+  destroyCropper();
+  
+  const imgElement = AvatarRef.value as HTMLImageElement;
+  if (!imgElement) {
+    console.error('AvatarRef element not found');
+    return;
+  }
+  
+  state.cropper = new Cropper(imgElement, {
     viewMode: 1,
     dragMode: 'none',
     initialAspectRatio: 1,
@@ -100,32 +135,77 @@ const initCropper = () => {
     autoCropArea: 0.6,
     zoomOnWheel: true,
     crop: () => {
-      // preview()
-      // state.cropperImgBase64 = state.cropper.getCroppedCanvas().toDataURL('image/jpeg');
+      /**
+       * 裁剪事件回调
+       * 
+       * 实时更新预览图片
+       */
+      try {
+        if (state.cropper) {
+          state.cropperImgBase64 = state.cropper.getCroppedCanvas().toDataURL('image/jpeg', 0.9);
+        }
+      } catch (error) {
+        console.error('Failed to preview cropped image:', error);
+      }
     },
   });
 };
 
-const preview = () => {
-  state.cropperImgBase64 = state.cropper.getCroppedCanvas().toDataURL('image/jpeg');
-}
-
-const beforeUpload = (file) => {
-  console.log("file", file)
-  const reader = new FileReader()
-  reader.readAsDataURL(file)
-  console.log("reader", reader.result)
-  // state.cropperImg = reader.result
-  reader.onload = (event) => {
-    console.log("event", event)
-    state.cropper.replace(URL.createObjectURL(file))
-    // openDialog(URL.createObjectURL(file))
-    console.log("previews", state.cropperImg)
-
+const destroyCropper = () => {
+  /**
+   * 销毁图片裁剪器
+   * 
+   * 释放cropper实例资源
+   */
+  if (state.cropper) {
+    state.cropper.destroy();
+    state.cropper = null;
   }
-  return false
-}
-// 暴露变量
+};
+
+const beforeUpload = (file: File) => {
+  /**
+   * 上传前文件验证
+   * 
+   * 验证文件类型和大小，并将图片加载到裁剪器中
+   * 
+   * @param {File} file - 上传的文件对象
+   * @returns {boolean} 是否阻止默认上传行为
+   */
+  if (!file.type.startsWith('image/')) {
+    console.error('Please select an image file');
+    return false;
+  }
+  
+  if (file.size > 5 * 1024 * 1024) {
+    console.error('Image size should be less than 5MB');
+    return false;
+  }
+  
+  if (!state.cropper) {
+    console.error('Cropper instance not initialized');
+    return false;
+  }
+  
+  try {
+    const objectUrl = URL.createObjectURL(file);
+    state.cropper.replace(objectUrl);
+  } catch (error) {
+    console.error('Failed to load image:', error);
+  }
+  
+  return false;
+};
+
+onBeforeUnmount(() => {
+  /**
+   * 组件卸载前清理
+   * 
+   * 销毁cropper实例防止内存泄漏
+   */
+  destroyCropper();
+});
+
 defineExpose({
   openDialog,
   state,

@@ -18,7 +18,6 @@ declare type PersonalState = {
 	recommendList: Recommend[];
 	personalForm: {
 		username: string;
-		nickname: string;
 		avatar: string;
 		remarks: string;
 		email: string;

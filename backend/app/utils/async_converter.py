@@ -6,6 +6,7 @@ from __future__ import annotations
 # Standard Library Imports
 import asyncio as aio
 import inspect
+import os
 import threading
 import typing
 
@@ -14,18 +15,6 @@ AnyException = typing.Union[Exception, typing.Type[Exception]]
 AnyCoroutine = typing.Coroutine[typing.Any, typing.Any, typing.Any]
 
 __all__ = ("AsyncIOPool",)
-
-WorkerPoolInfo = dict[
-    str,
-    typing.Optional[
-        typing.Union[
-            int,
-            bool,
-            tuple[int, ...],
-            aio.AbstractEventLoop,
-        ]
-    ],
-]
 
 
 class AsyncIOPool:
@@ -41,20 +30,6 @@ class AsyncIOPool:
         # created per process
 
         if not isinstance(cls.singleton, cls):
-            # Package-Level Imports
-            # from celery_aio_pool import patch_celery_tracer
-
-            # We can't assume that a user has elected to enable
-            # automatic patching of Celery's default `build_tracer`
-            # utility. We need to be *guarantee* that the patch
-            # has been applied though, and the patching process
-            # itself is idempotent therefore safe to call any
-            # number of times.
-            # assert patch_celery_tracer()
-
-            # Create the requested new worker pool and use it to
-            # populate the class's currently "empty" `singleton`
-            # attribute
             cls.singleton = super(AsyncIOPool, cls).__new__(cls)
 
         # Return the class-bound worker pool instance
@@ -84,16 +59,8 @@ class AsyncIOPool:
             forking_enable=False,
         )
 
-        # Call the default constructor method ...
-        # celery.concurrency.base.BasePool.__init__(
-        #     self,
-        #     *args,
-        #     **kwargs,
-        # )
-
         # ... perform the usual "housekeeping", ...
         self.limit = 1
-        # celery.signals.worker_process_init.send(sender=None)
 
         # ... create the pool's asyncio eventloop ...
         self.loop = aio.new_event_loop()
@@ -110,18 +77,6 @@ class AsyncIOPool:
         # Set the new event loop as the "active" eventloop
         # in current thread / process
         aio.set_event_loop(self.loop)
-
-    # def _get_info(self) -> WorkerPoolInfo:
-    #     info = super()._get_info()
-    #     info.update({
-    #         "timeouts": (),
-    #         "max-concurrency": 1,
-    #         "event-loop": str(self.loop),
-    #         "max-tasks-per-child": None,
-    #         "processes": (os.getpid(),),
-    #         "put-guarded-by-semaphore": True,
-    #     })
-    #     return info
 
     def run(
             self,
@@ -223,59 +178,3 @@ class AsyncIOPool:
         """Join the loop-runner thread."""
         self.loop_runner.join()
 
-    # def on_apply(
-    #         self,
-    #         target: AnyCallable | AnyCoroutine,
-    #         args: tuple[Any, ...] = tuple(),
-    #         kwargs: Optional[dict[str, Any]] = None,
-    #         callback: Optional[AnyCallable | AnyCoroutine] = None,
-    #         accept_callback: [AnyCallable | AnyCoroutine] = None,
-    #         pid: Optional[int] = None,
-    #         getpid: Callable[[], int] = os.getpid,
-    #         propagate: tuple[AnyException, ...] = tuple(),
-    #         monotonic: Callable[[], int] = time.monotonic,
-    #         **_,
-    # ):
-    #     """Apply function within pool context."""
-    #     kwargs = kwargs or dict()
-    #     propagate += (
-    #         Exception,
-    #         WorkerShutdown,
-    #         WorkerTerminate,
-    #     )
-    #
-    #     if accept_callback:
-    #         self.run(
-    #             accept_callback,
-    #             pid or getpid(),
-    #             monotonic(),
-    #         )
-    #
-    #     try:
-    #         ret = self.run(
-    #             target,
-    #             *args,
-    #             **kwargs,
-    #         )
-    #     except propagate as error:
-    #         raise error
-    #
-    #     except BaseException as exc:
-    #         try:
-    #             reraise(
-    #                 WorkerLostError,
-    #                 WorkerLostError(repr(exc)),
-    #                 sys.exc_info()[2],
-    #             )
-    #         except WorkerLostError:
-    #             self.run(callback, ExceptionInfo())
-    #     else:
-    #         self.run(callback, ret)
-    #
-    # def terminate_job(self, pid, signal=None):
-    #     """Terminate the specified job."""
-    #     raise NotImplementedError
-    #
-    # def restart(self) -> None:
-    #     """Restart the pool instance."""
-    #     raise NotImplementedError

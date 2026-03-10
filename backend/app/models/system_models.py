@@ -6,7 +6,6 @@ from sqlalchemy import Column, String, Text, Integer, DateTime, select, update, 
 from sqlalchemy.orm import aliased
 
 from app.models.base import Base
-from app.schemas.system.lookup import LookupQuery, LookupValueQuery
 from app.schemas.system.roles import RoleQuery
 from app.schemas.system.user import UserQuery, UserLoginRecordQuery
 
@@ -16,37 +15,37 @@ class User(Base):
     __tablename__ = 'user'
 
     username = Column(String(64), nullable=False, comment='用户名', index=True)
+    phone = Column(String(11), nullable=False, comment='手机号', index=True)
     password = Column(Text, nullable=False, comment='密码')
     email = Column(String(64), nullable=True, comment='邮箱')
-    roles = Column(JSON, nullable=False, comment='用户类型')
     status = Column(Integer, nullable=False, comment='用户状态  1 锁定， 0 正常', default=0)
-    nickname = Column(String(255), nullable=False, comment='用户昵称')
-    user_type = Column(Integer, nullable=False, comment='用户类型 10 管理人员, 20 测试人员', default=20)
-    remarks = Column(String(255), nullable=False, comment='用户描述')
-    avatar = Column(Text, nullable=False, comment='头像')
-    tags = Column(JSON, nullable=False, comment='标签')
+    role_type = Column(Integer, nullable=False, comment='用户类型 10 超级管理员, 20 管理员, 30 普通用户', default=30)
+    remarks = Column(String(255), nullable=True, comment='用户描述', default='')
+    avatar = Column(Text, nullable=True, comment='头像', default='')
+    tags = Column(JSON, nullable=True, comment='标签', default=list)
 
     @classmethod
     async def get_list(cls, params: UserQuery):
+        """
+        获取用户列表
+
+        :param params: 查询参数
+        :type params: UserQuery
+        :return: 分页数据
+        :rtype: typing.Dict[typing.Text, typing.Any]
+        """
         q = [cls.enabled_flag == 1]
         if params.username:
-            q.append(cls.username.like('%{}%'.format(params.username)))
-        if params.nickname:
-            q.append(cls.nickname.like('%{}%'.format(params.nickname)))
+            # 转义LIKE特殊字符 % 和 _，防止通配符注入
+            username = params.username.replace('%', '\\%').replace('_', '\\_')
+            q.append(cls.username.like(f'%{username}%'))
         if params.user_ids and isinstance(params.user_ids, list):
             q.append(cls.id.in_(params.user_ids))
         # *[getattr(cls, c.name) for c in cls.__table__.columns]
-        u = aliased(User)
-        stmt = select(*cls.get_table_columns(), u.nickname.label("created_by_name")) \
+        stmt = select(*cls.get_table_columns()) \
             .where(*q) \
-            .outerjoin(u, u.id == cls.created_by) \
             .order_by(cls.id.desc())
         return await cls.pagination(stmt)
-
-    @classmethod
-    async def get_user_by_roles(cls, roles_id: int) -> typing.Any:
-        stmt = select(cls.id).where(cls.roles.like(f'%{roles_id}%'), cls.enabled_flag == 1)
-        return await cls.get_result(stmt, True)
 
     @classmethod
     async def get_user_by_name(cls, username: str):
@@ -54,8 +53,8 @@ class User(Base):
         return await cls.get_result(stmt, True)
 
     @classmethod
-    async def get_user_by_nickname(cls, nickname: str):
-        stmt = select(*cls.get_table_columns()).where(cls.nickname == nickname, cls.enabled_flag == 1)
+    async def get_user_by_phone(cls, phone: str):
+        stmt = select(*cls.get_table_columns()).where(cls.phone == phone, cls.enabled_flag == 1)
         return await cls.get_result(stmt, True)
 
 
@@ -132,30 +131,37 @@ class Roles(Base):
     __tablename__ = 'roles'
 
     name = Column(String(64), nullable=True, comment='菜单名称', index=True)
-    role_type = Column(Integer, nullable=False, comment='权限类型，10菜单权限，20用户组权限', index=True, default=10)
-    menus = Column(String(64), nullable=True, comment='菜单列表', index=True)
-    description = Column(Integer, nullable=True, comment='描述')
-    status = Column(Integer, nullable=True, comment='状态 10 启用 20 禁用', default=10)
+    role_type = Column(Integer, nullable=False, comment='角色类型 10 超级管理员, 20 管理员, 30 普通用户', index=True, default=30)
+    menus = Column(String(500), nullable=True, comment='菜单列表', index=True)
+    buttons = Column(Text, nullable=True, comment='按钮权限列表')
+    description = Column(String(255), nullable=True, comment='描述')
+    status = Column(Integer, nullable=True, comment='状态 1 启用 0 禁用', default=1)
 
     @classmethod
     async def get_list(cls, params: RoleQuery):
+        """
+        获取角色列表
+
+        :param params: 查询参数
+        :type params: RoleQuery
+        :return: 分页数据
+        :rtype: typing.Dict[typing.Text, typing.Any]
+        """
         q = [cls.enabled_flag == 1]
         if params.id:
             q.append(cls.id == params.id)
         if params.name:
-            q.append(cls.name.like(f'%{params.name}%'))
+            # 转义LIKE特殊字符 % 和 _，防止通配符注入
+            name = params.name.replace('%', '\\%').replace('_', '\\_')
+            q.append(cls.name.like(f'%{name}%'))
         if params.role_type:
             q.append(cls.role_type == params.role_type)
         else:
-            q.append(cls.role_type == 10)
-        u = aliased(User)
-        stmt = select(cls.get_table_columns(),
-                      u.nickname.label("created_by_name"),
-                      User.nickname.label("updated_by_name")) \
+            # 默认查询所有角色类型
+            pass
+        stmt = select(cls.get_table_columns()) \
             .where(*q) \
-            .outerjoin(u, u.id == cls.created_by) \
-            .outerjoin(User, User.id == cls.updated_by) \
-            .order_by(cls.id.desc())
+            .order_by(cls.id.asc())
 
         return await cls.pagination(stmt)
 
@@ -165,7 +171,8 @@ class Roles(Base):
         if role_type:
             q.append(cls.role_type == role_type)
         else:
-            q.append(cls.role_type == 10)
+            # 查询所有角色类型
+            pass
 
         stmt = select(cls.get_table_columns()).where(*q)
         return await cls.get_result(stmt)
@@ -183,154 +190,119 @@ class Roles(Base):
         if role_type:
             q.append(cls.role_type == role_type)
         else:
-            q.append(cls.role_type == 10)
+            # 查询所有角色类型
+            pass
         stmt = select(cls.get_table_columns()).where(*q)
         return await cls.get_result(stmt, True)
 
 
-class Lookup(Base):
-    __tablename__ = 'lookup'
+# Redis 模块级初始化
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from config import config as settings
+from app.db.redis import RedisPool
 
-    code = Column(String(64), nullable=False, index=True, comment='编码')
-    description = Column(String(256), comment='描述')
-
-    @classmethod
-    async def get_list(cls, params: LookupQuery):
-        q = [cls.enabled_flag == 1]
-        if params.code:
-            q.append(cls.code.like(f"%{params.code}%"))
-        u = aliased(User)
-        stmt = select(cls.get_table_columns(),
-                      u.nickname.label("created_by_name"),
-                      User.nickname.label("updated_by_name")) \
-            .where(*q) \
-            .join(u, u.id == cls.created_by) \
-            .join(User, User.id == cls.updated_by) \
-            .order_by(cls.id.desc())
-
-        return await cls.pagination(stmt)
-
-    @classmethod
-    async def get_lookup_by_code(cls, code: str):
-        stmt = select(cls).where(cls.code == code, cls.enabled_flag == 1)
-        return await cls.get_result(stmt)
-
-
-class LookupValue(Base):
-    __tablename__ = 'lookup_value'
-
-    id = Column(Integer, primary_key=True, comment='主键')
-    lookup_id = Column(Integer, nullable=False, index=True, comment='所属类型')
-    lookup_code = Column(String(32), nullable=False, index=True, comment='编码')
-    lookup_value = Column(String(256), comment='值')
-    ext = Column(String(256), comment='拓展1')
-    display_sequence = Column(Integer, comment='显示顺序')
-
-    @classmethod
-    async def get_lookup_value(cls, params: LookupValueQuery = LookupValueQuery()):
-        q = [cls.enabled_flag == 1]
-        if params.code:
-            q.append(Lookup.code == params.code)
-        if params.lookup_id:
-            q.append(cls.lookup_id == params.lookup_id)
-        u = aliased(User)
-        stmt = select(cls.get_table_columns(),
-                      Lookup.code.label('code'),
-                      u.nickname.label('created_by_name'),
-                      User.nickname.label('updated_by_name')) \
-            .where(*q) \
-            .join(Lookup, cls.lookup_id == Lookup.id) \
-            .join(User, cls.created_by == User.id) \
-            .join(u, cls.updated_by == u.id) \
-            .order_by(cls.display_sequence)
-        return await cls.get_result(stmt)
-
-    @classmethod
-    async def get_lookup_value_by_lookup_id(cls, lookup_id, lookup_code=None):
-        q = [cls.lookup_id == lookup_id, cls.enabled_flag == 1]
-        if lookup_code:
-            q.append(cls.lookup_code == lookup_code)
-        stmt = select(cls.get_table_columns()).where(*q) \
-            .order_by(cls.id.desc())
-        return await cls.get_result(stmt, True)
-
-
-class RequestHistory(Base):
-    __tablename__ = 'request_history'
-
-    id = Column(Integer, primary_key=True, info='主键')
-    remote_addr = Column(String(255), nullable=False, comment='用户名称')
-    real_ip = Column(String(255), nullable=False, comment='用户名称')
-    request = Column(Text, nullable=False, comment='用户名称')
-    method = Column(String(255), nullable=True, comment='操作')
-    url = Column(String(255), nullable=True, comment='操作')
-    args = Column(String(255), nullable=True, comment='操作')
-    form = Column(String(255), nullable=True, comment='操作')
-    json = Column(Text, nullable=True, comment='操作')
-    response = Column(Text, nullable=True, comment='操作')
-    endpoint = Column(Text, nullable=True, comment='操作')
-    elapsed = Column(Text, nullable=True, comment='操作')
-    request_time = Column(DateTime, nullable=True, comment='操作')
-    env = Column(String(255), nullable=True, comment='操作')
-    employee_code = Column(String(255), nullable=True, comment='操作')
-    toekn = Column(String(255), nullable=True, comment='操作')
-
-
-class MenuViewHistory(Base):
-    """访问"""
-    __tablename__ = 'menu_view_history'
-
-    menu_id = Column(Integer(), nullable=True, comment='菜单id', index=True)
-    remote_addr = Column(String(64), nullable=True, comment='访问ip', index=True)
-    user_id = Column(Integer(), nullable=True, comment='访问人', index=True)
-
-
-class Notify(Base):
-    """消息"""
-    __tablename__ = 'notify'
-
-    user_id = Column(Integer(), nullable=True, comment='用户id', index=True)
-    group = Column(String(64), nullable=True, comment='组')
-    message = Column(String(500), nullable=True, comment='消息')
-    send_status = Column(Integer(), nullable=True, comment='发送状态，10成功 20 失败')
-    read_status = Column(Integer(), nullable=True, comment='消息状态，10未读 20 已读')
-
+# 创建全局 RedisPool 实例
+redis_pool = RedisPool()
+try:
+    redis_pool.init_by_config(settings)
+except Exception as e:
+    # 初始化失败时记录日志
+    import logging
+    logging.error(f"Redis 初始化失败: {e}")
 
 class UserLoginRecord(Base):
     __tablename__ = "user_login_record"
     __table_args__ = (
-        Index('idx_login_record_code_logintime', 'code', 'login_time'),
+        Index('phone', 'login_time'),
     )
 
     token = Column(String(40), index=True, comment='登陆token')
-    code = Column(String(64), index=True, comment='账号')
+    phone = Column(String(64), index=True, comment='手机号')
     user_id = Column(Integer, comment='用户id')
     user_name = Column(String(50), comment='用户名称')
-    logout_type = Column(String(50), comment='退出类型')
     login_type = Column(String(50), index=True, comment='登陆方式   扫码  账号密码等')
     login_time = Column(DateTime, index=True, comment='登陆时间')
     logout_time = Column(DateTime, comment='退出时间')
     login_ip = Column(String(30), index=True, comment='登录IP')
     ret_msg = Column(String(255), comment='返回信息')
     ret_code = Column(String(9), index=True, comment='是否登陆成功  返回状态码  0成功')
-    address = Column(String(255), comment='地址')
-    source_type = Column(String(255), comment='来源')
 
     @classmethod
     async def get_list(cls, params: UserLoginRecordQuery):
+        """
+        获取用户登录记录列表
+
+        :param params: 查询参数
+        :type params: UserLoginRecordQuery
+        :return: 分页数据
+        :rtype: typing.Dict[typing.Text, typing.Any]
+        """
+        # 开始计时
+        import time
+        start_time = time.time()
+        import json
+        import logging
+        
+        # 尝试从缓存获取
+        cache_key = f"login_records:{params.user_id}:{params.page}:{params.page_size}"
+        try:
+            cached_data = await redis_pool.redis.get(cache_key)
+            if cached_data:
+                logging.info(f"Redis 缓存命中: {cache_key}")
+                logging.info(f"缓存查询耗时: {time.time() - start_time:.4f}s")
+                return cached_data
+            else:
+                logging.info(f"Redis 缓存未命中: {cache_key}")
+        except Exception as e:
+            # 缓存失败时继续执行数据库查询
+            logging.error(f"Redis 缓存获取失败: {e}")
+            pass
+        
+        # 构建查询条件
         q = [cls.enabled_flag == 1]
-        if params.token:
-            q.append(cls.token.like('%{}%'.format(params.token)))
-        if params.code:
-            q.append(cls.code.like('%{}%'.format(params.code)))
-        if params.user_name:
-            q.append(cls.user_name.like('%{}%'.format(params.user_name)))
+        if params.user_id:
+            q.append(cls.user_id == params.user_id)
+        
+        # 执行数据库查询
+        from sqlalchemy.orm import aliased
+        from app.models.system_models import User
         u = aliased(User)
-        stmt = select(cls) \
+        # 只选择必要的字段，减少数据传输
+        stmt = select(
+            cls.token,
+            cls.phone,
+            cls.user_name,
+            cls.login_type,
+            cls.login_time,
+            cls.login_ip,
+            cls.ret_msg,
+            cls.ret_code,
+            cls.enabled_flag,
+            cls.trace_id
+        ) \
             .where(*q) \
-            .outerjoin(u, u.id == cls.created_by) \
             .order_by(cls.id.desc())
-        return await cls.pagination(stmt)
+        
+        query_start_time = time.time()
+        result = await cls.pagination(stmt)
+        query_end_time = time.time()
+        logging.info(f"数据库查询耗时: {query_end_time - query_start_time:.4f}s")
+        
+        # 缓存结果，过期时间1小时
+        try:
+            await redis_pool.redis.set(cache_key, json.dumps(result), ex=3600)
+            logging.info(f"Redis 缓存设置成功: {cache_key}")
+        except Exception as e:
+            # 缓存失败时忽略，继续返回结果
+            logging.error(f"Redis 缓存设置失败: {e}")
+            pass
+        
+        # 结束计时
+        end_time = time.time()
+        logging.info(f"总执行耗时: {end_time - start_time:.4f}s")
+        return result
 
     @classmethod
     async def get_by_token(cls, token: str):

@@ -4,7 +4,7 @@ from fastapi.requests import Request
 
 from app.corelibs.codes import CodeEnum
 from app.corelibs.custom_router import APIRouter
-from app.schemas.system.user import UserLogin, UserQuery, UserIn, UserResetPwd, UserDel
+from app.schemas.system.user import UserLogin, UserQuery, UserIn, UserResetPwd, UserDel, UserProfileUpdate, UserAvatarUpdate, UserEmailUpdate, UserRegister
 from app.services.system.user import UserService
 from app.utils.response import HttpResponse
 
@@ -50,7 +50,7 @@ async def get_user_info():
 
 
 @router.post('/userRegister', description="新增用户")
-async def user_register(user_info: UserIn):
+async def user_register(user_info: UserRegister):
     data = await UserService.user_register(user_info)
     return await HttpResponse.success(data)
 
@@ -63,7 +63,6 @@ async def reset_password(params: UserResetPwd):
 
 @router.post('/deleted', description="删除用户")
 async def deleted(params: UserDel):
-    return await HttpResponse.success(code=CodeEnum.PARTNER_CODE_FAIL.code, msg='限制删除用户')
     data = await UserService.deleted(params)
     return await HttpResponse.success(data)
 
@@ -79,3 +78,39 @@ async def authorize_token(request: Request):
 async def get_menu_by_token():
     user_info = await UserService.get_menu_by_token()
     return await HttpResponse.success(user_info)
+
+
+@router.post('/updateProfile', description="更新个人信息")
+async def update_profile(params: UserProfileUpdate):
+    """
+    更新个人信息
+    
+    :param params: 个人信息参数
+    :return: 更新后的用户信息
+    """
+    result = await UserService.update_profile(params)
+    return await HttpResponse.success(result)
+
+
+@router.post('/updateAvatar', description="更新用户头像")
+async def update_avatar(params: UserAvatarUpdate):
+    """
+    更新用户头像
+    
+    :param params: 头像参数
+    :return: 更新后的用户信息
+    """
+    result = await UserService.update_avatar(params)
+    return await HttpResponse.success(result)
+
+
+@router.post('/updateEmail', description="更新用户邮箱")
+async def update_email(params: UserEmailUpdate):
+    """
+    更新用户邮箱
+    
+    :param params: 邮箱参数
+    :return: 更新后的用户信息
+    """
+    result = await UserService.update_email(params)
+    return await HttpResponse.success(result)

@@ -76,10 +76,10 @@
             <!--              </el-form-item>-->
             <!--            </el-col>-->
           </template>
-          <template v-if="state.form.menuType === 'btn'">
+          <template v-if="state.form.menu_type === 20">
             <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
               <el-form-item label="权限标识">
-                <el-input v-model="state.form.btnPower" placeholder="请输入权限标识" clearable></el-input>
+                <el-input v-model="state.form.btnPower" placeholder="请输入权限标识，如：user:add" clearable></el-input>
               </el-form-item>
             </el-col>
           </template>
@@ -149,14 +149,13 @@ import {useMenuApi} from "/@/api/useSystemApi/menu";
 import {ElMessage} from "element-plus";
 
 const emit = defineEmits(['getList'])
-const props = defineProps({
-  allMenuList: {
-    type: Array,
-  },
-  menuList: {
-    type: Array,
-  }
-})
+const props = defineProps<{
+  allMenuList: Array<{
+    id: number;
+    title: string;
+  }>;
+  menuList: Array<any>;
+}>();
 
 const createMenuForm = () => {
   return {
@@ -214,8 +213,8 @@ const closeDialog = () => {
 };
 // 是否内嵌下拉改变
 const onSelectIframeChange = () => {
-  if (state.form.meta.isIframe) state.form.isLink = true;
-  else state.form.isLink = false;
+  if (state.form.isIframe === 1) state.form.isLink = 1;
+  else state.form.isLink = 0;
 };
 // 取消
 const onCancel = () => {

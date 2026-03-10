@@ -1,7 +1,7 @@
 <template>
   <el-form size="large" class="login-content-form">
     <el-form-item class="login-animation1">
-      <el-input text placeholder="用户名 admin 或不输均为 common" v-model="state.ruleForm.userName" clearable
+      <el-input text placeholder="请输入手机号" v-model="state.ruleForm.phone" clearable
                 autocomplete="off">
         <template #prefix>
           <el-icon class="el-input__icon">
@@ -11,7 +11,7 @@
       </el-input>
     </el-form-item>
     <el-form-item class="login-animation2">
-      <el-input :type="state.isShowPassword ? 'text' : 'password'" placeholder="密码：123456"
+      <el-input :type="state.isShowPassword ? 'text' : 'password'" placeholder="请输入密码"
                 v-model="state.ruleForm.password" autocomplete="off">
         <template #prefix>
           <el-icon class="el-input__icon">
@@ -28,6 +28,7 @@
         </template>
       </el-input>
     </el-form-item>
+    <!-- 验证码功能已注释掉
     <el-form-item class="login-animation3">
       <el-col :span="15">
         <el-input text maxlength="4" placeholder="请输入验证码" v-model="state.ruleForm.code" clearable
@@ -44,11 +45,21 @@
         <el-button class="login-content-code" v-waves>1234</el-button>
       </el-col>
     </el-form-item>
-    <el-form-item class="login-animation4">
-      <el-button type="primary" class="login-content-submit" round v-waves @click="onSignIn"
-                 :loading="state.loading.signIn">
-        <span>登 录</span>
-      </el-button>
+    -->
+    <el-form-item class="login-animation3">
+      <el-row :gutter="10" style="width: 100%;">
+        <el-col :span="12">
+          <el-button type="primary" class="login-content-submit" round v-waves @click="onSignIn"
+                     :loading="state.loading.signIn">
+            <span>登 录</span>
+          </el-button>
+        </el-col>
+        <el-col :span="12">
+          <el-button class="login-content-submit" round v-waves @click="onRegister">
+            <span>注 册</span>
+          </el-button>
+        </el-col>
+      </el-row>
     </el-form-item>
   </el-form>
 </template>
@@ -74,9 +85,9 @@ const router = useRouter();
 const state = reactive({
   isShowPassword: false,
   ruleForm: {
-    userName: 'admin',
-    password: '123456',
-    code: '1234',
+    phone: '',
+    password: '',
+    // code: '1234',  // 验证码功能已注释掉
   },
   loading: {
     signIn: false,
@@ -89,12 +100,24 @@ const currentTime = computed(() => {
 });
 // 登录
 const onSignIn = async () => {
+  // 表单验证
+  if (!state.ruleForm.phone) {
+    ElMessage.warning('请输入手机号');
+    return;
+  }
+  if (!state.ruleForm.password) {
+    ElMessage.warning('请输入密码');
+    return;
+  }
+  
   state.loading.signIn = true;
-  useUserApi().signIn({username: state.ruleForm.userName, password: state.ruleForm.password})
+  useUserApi().signIn({phone: state.ruleForm.phone, password: state.ruleForm.password})
       .then(async res => {
         Session.set('token', res.data.token);
-        // Session.set('userInfo', res.data);
-        await useUserStore().setUserInfos();
+        // 清除之前的用户信息缓存，确保获取最新的权限数据
+        Session.remove('userInfo');
+        // 强制刷新用户信息，获取最新的按钮权限
+        await useUserStore().setUserInfos(true);
         await initBackEndControlRoutes();
         // await initFrontEndControlRoutes();
         signInSuccess(false);
@@ -127,17 +150,8 @@ const signInSuccess = (isNoPower: boolean) => {
   } else {
     // 初始化登录成功时间问候语
     let currentTimeInfo = currentTime.value;
-    // 登录成功，跳到转首页
-    // 如果是复制粘贴的路径，非首页/登录页，那么登录成功后重定向到对应的路径中
-    const params = route.query!.params || {}
-    if (route.query?.redirect) {
-      router.push({
-        path: route.query?.redirect,
-        query: Object.keys(params).length > 0 ? JSON.parse(params) : '',
-      });
-    } else {
-      router.push('/home');
-    }
+    // 登录成功，固定跳转到首页
+    router.push('/home');
     // 登录成功提示
     const signInText = '欢迎回来！';
     ElMessage.success(`${currentTimeInfo}，${signInText}`);
@@ -146,11 +160,17 @@ const signInSuccess = (isNoPower: boolean) => {
   }
   state.loading.signIn = false;
 };
+
+// 跳转到注册页面
+const onRegister = () => {
+  router.push('/register');
+};
 </script>
 
 <style scoped lang="scss">
 .login-content-form {
   margin-top: 20px;
+
   @for $i from 1 through 4 {
     .login-animation#{$i} {
       opacity: 0;
@@ -162,20 +182,12 @@ const signInSuccess = (isNoPower: boolean) => {
   }
 
   .login-content-password {
-    display: inline-block;
-    width: 20px;
     cursor: pointer;
-
-    &:hover {
-      color: #909399;
-    }
   }
 
   .login-content-code {
     width: 100%;
     padding: 0;
-    font-weight: bold;
-    letter-spacing: 5px;
   }
 
   .login-content-submit {

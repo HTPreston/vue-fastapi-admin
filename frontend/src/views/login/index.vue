@@ -27,19 +27,12 @@
           <div class="login-right-warp-main-form">
             <div v-if="!state.isScan">
               <el-tabs v-model="state.tabsActiveName">
-                <el-tab-pane label="账号密码登录" name="account">
+                <el-tab-pane label="手机号登录" name="account">
                   <Account/>
                 </el-tab-pane>
-                <!--                <el-tab-pane label="手机号登录" name="mobile">-->
-                <!--                  <Mobile/>-->
-                <!--                </el-tab-pane>-->
               </el-tabs>
             </div>
             <Scan v-if="state.isScan"/>
-            <!--            <div class="login-content-main-sacn" @click="state.isScan = !state.isScan">-->
-            <!--              <i class="iconfont" :class="state.isScan ? 'icon-diannao1' : 'icon-barcode-qr'"></i>-->
-            <!--              <div class="login-content-main-sacn-delta"></div>-->
-            <!--            </div>-->
           </div>
         </div>
       </div>
@@ -101,7 +94,6 @@ onMounted(() => {
   .login-left {
     flex: 1;
     position: relative;
-    //background-color: rgba(211, 239, 255, 1);
     margin-right: 100px;
 
     .login-left-logo {
@@ -110,8 +102,6 @@ onMounted(() => {
       position: absolute;
       top: -165px;
       left: -70px;
-      //top: 50px;
-      //left: 80px;
       z-index: 1;
       animation: logoAnimation 0.3s ease;
 
@@ -196,50 +186,50 @@ onMounted(() => {
       }
 
       .login-right-warp-one {
-        //&::before {
-        //  filter: hue-rotate(0deg);
-        //  top: 0px;
-        //  left: 0;
-        //  width: 100%;
-        //  height: 3px;
-        //  background: linear-gradient(90deg, transparent, var(--el-color-primary));
-        //  animation: loginLeft 3s linear infinite;
-        //}
-        //
-        //&::after {
-        //  filter: hue-rotate(60deg);
-        //  top: -100%;
-        //  right: 2px;
-        //  width: 3px;
-        //  height: 100%;
-        //  background: linear-gradient(180deg, transparent, var(--el-color-primary));
-        //  animation: loginTop 3s linear infinite;
-        //  animation-delay: 0.7s;
-        //}
+        &::before {
+         filter: hue-rotate(0deg);
+         top: 0px;
+         left: 0;
+         width: 100%;
+         height: 3px;
+         background: linear-gradient(90deg, transparent, var(--el-color-primary));
+         animation: loginLeft 3s linear infinite;
+        }
+        
+        &::after {
+         filter: hue-rotate(60deg);
+         top: -100%;
+         right: 2px;
+         width: 3px;
+         height: 100%;
+         background: linear-gradient(180deg, transparent, var(--el-color-primary));
+         animation: loginTop 3s linear infinite;
+         animation-delay: 0.7s;
+        }
       }
 
       .login-right-warp-two {
-        //&::before {
-        //  filter: hue-rotate(120deg);
-        //  bottom: 2px;
-        //  right: -100%;
-        //  width: 100%;
-        //  height: 3px;
-        //  background: linear-gradient(270deg, transparent, var(--el-color-primary));
-        //  animation: loginRight 3s linear infinite;
-        //  animation-delay: 1.4s;
-        //}
-        //
-        //&::after {
-        //  filter: hue-rotate(300deg);
-        //  bottom: -100%;
-        //  left: 0px;
-        //  width: 3px;
-        //  height: 100%;
-        //  background: linear-gradient(360deg, transparent, var(--el-color-primary));
-        //  animation: loginBottom 3s linear infinite;
-        //  animation-delay: 2.1s;
-        //}
+        &::before {
+         filter: hue-rotate(120deg);
+         bottom: 2px;
+         right: -100%;
+         width: 100%;
+         height: 3px;
+         background: linear-gradient(270deg, transparent, var(--el-color-primary));
+         animation: loginRight 3s linear infinite;
+         animation-delay: 1.4s;
+        }
+        
+        &::after {
+         filter: hue-rotate(300deg);
+         bottom: -100%;
+         left: 0px;
+         width: 3px;
+         height: 100%;
+         background: linear-gradient(360deg, transparent, var(--el-color-primary));
+         animation: loginBottom 3s linear infinite;
+         animation-delay: 2.1s;
+        }
       }
 
       .login-right-warp-mian {

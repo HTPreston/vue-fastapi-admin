@@ -5,7 +5,7 @@
         <el-input v-model="state.listQuery.username" placeholder="请输入用户名称" style="max-width: 180px"></el-input>
         <el-button type="primary" class="ml10" @click="search">查询
         </el-button>
-        <el-button type="success" class="ml10" @click="onOpenSaveOrUpdate('save', null)">
+        <el-button v-auth="'user:add'" type="success" class="ml10" @click="onOpenSaveOrUpdate('save', null)">
           新增
         </el-button>
       </div>
@@ -19,26 +19,24 @@
           @pagination-change="getList"
       />
     </el-card>
-    <SaveOrUpdateUser @getList="getList" :roleList="state.roleList" ref="SaveOrUpdateUserRef"/>
+    <SaveOrUpdateUser @getList="getList" ref="SaveOrUpdateUserRef"/>
   </div>
 </template>
 
 <script lang="ts" setup name="SystemUser">
-import {h, onMounted, reactive, ref} from 'vue';
+import {h, onMounted, reactive, ref, computed} from 'vue';
 import {ElButton, ElMessage, ElMessageBox, ElTag} from 'element-plus';
 import SaveOrUpdateUser from '/@/views/system/user/EditUser.vue';
 import {useUserApi} from '/@/api/useSystemApi/user';
-import {useRolesApi} from "/@/api/useSystemApi/roles";
+import {hasPermission} from '/@/utils/auth';
 
 // 定义接口来定义对象的类型
 interface TableDataRow {
   id: number;
   username: string;
   email: string;
-  roles: string;
   status: boolean;
-  nickname: string;
-  user_type: number;
+  role_type: number;
   created_by: number;
   updated_by: number;
   creation_date: string;
@@ -58,8 +56,6 @@ interface StateRow {
   listData: Array<TableDataRow>;
   total: number;
   listQuery: listQueryRow;
-  roleList: Array<any>;
-  roleQuery: listQueryRow;
 }
 
 
@@ -67,22 +63,43 @@ const SaveOrUpdateUserRef = ref()
 const tableRef = ref()
 
 const state = reactive<StateRow>({
+  fieldData: [],
   columns: [
     {
-      key: 'username', label: '账户名称', width: '', align: 'center', show: true,
-      render: (row: any) => h(ElButton, {
-        link: true,
-        type: "primary",
-        onClick: () => {
-          onOpenSaveOrUpdate("update", row)
+      label: '操作', fixed: 'left', width: '', align: 'center',
+      render: (row: any) => {
+        const buttons = [];
+        if (hasPermission('user:edit')) {
+          buttons.push(h(ElButton, {
+            type: "primary",
+            size: "small",
+            onClick: () => {
+              onOpenSaveOrUpdate('update', row)
+            }
+          }, () => '编辑'));
         }
+        if (hasPermission('user:delete')) {
+          buttons.push(h(ElButton, {
+            type: "danger",
+            size: "small",
+            onClick: () => {
+              deleted(row)
+            }
+          }, () => '删除'));
+        }
+        return h("div", { style: { display: 'flex', gap: '8px', justifyContent: 'center' } }, buttons);
+      }
+    },
+    {
+      key: 'username', label: '账户名称', width: '', align: 'center', show: true,
+      render: (row: any) => h(ElTag, {
+        type: row.role_type == 10 ? "danger" : row.role_type == 20 ? "warning" : "primary",
+        effect: "light"
       }, () => row.username)
     },
-    {key: 'nickname', label: '用户昵称', width: '', align: 'center', show: true},
-    {
-      key: 'roles', label: '关联角色', width: '', align: 'center', show: true,
-      render: (row: any) => handleRoles(row.roles)
-    },
+    {key: 'phone', label: '手机号', width: '', align: 'center', show: true},
+
+
     {key: 'email', label: '邮箱', width: '', align: 'center', show: true},
     {
       key: 'status', label: '用户状态', width: '', align: 'center', show: true,
@@ -91,7 +108,7 @@ const state = reactive<StateRow>({
       }, () => row.status ? "启用" : "禁用",)
     },
     {key: 'remarks', label: '备注', width: '', align: 'center', show: true},
-    {key: 'creation_date', label: '创建时间', width: '150', align: 'center', show: true},
+    {key: 'creation_date', label: '创建时间', width: '', align: 'center', show: true},
   ],
   // list
   listData: [],
@@ -102,11 +119,7 @@ const state = reactive<StateRow>({
     username: '',
   },
   //rule
-  roleList: [],
-  roleQuery: {
-    page: 1,
-    pageSize: 100,
-  }
+
 });
 // 获取用户数据
 const getList = () => {
@@ -121,13 +134,6 @@ const getList = () => {
     })
 };
 
-const getRolesList = () => {
-  useRolesApi().getList(state.roleQuery)
-    .then((res: any) => {
-      state.roleList = res.data.rows
-    })
-};
-
 // 查询
 const search = () => {
   state.listQuery.page = 1
@@ -135,7 +141,7 @@ const search = () => {
 }
 
 // 新增或修改用户
-const onOpenSaveOrUpdate = (editType: string, row?: TableDataRow) => {
+const onOpenSaveOrUpdate = (editType: string, row: TableDataRow | null = null) => {
   SaveOrUpdateUserRef.value.openDialog(editType, row);
 };
 
@@ -156,21 +162,9 @@ const deleted = (row: TableDataRow) => {
     .catch(() => {
     });
 };
-
-// 处理角色名称
-const handleRoles = (roles: any) => {
-  let roleTagList: any[] = []
-  roles = roles ? roles : []
-  roles.forEach((role: any) => {
-    let roleName = state.roleList.find(e => e.id == role)?.name
-    roleTagList.push(h(ElTag, null, () => roleName))
-  })
-  return h('div', null, roleTagList)
-}
 // 页面加载时
 onMounted(() => {
   getList();
-  getRolesList()
 });
 
 </script>

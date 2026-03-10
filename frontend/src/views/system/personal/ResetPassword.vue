@@ -4,7 +4,7 @@
       title="修改密码"
       v-model="state.isShowDialog"
       width="40%">
-    <el-form ref="formRef" :model="state.form" :rules="state.rules" label-width="80px">
+    <el-form ref="formRef" :model="state.form" label-width="80px">
       <el-row :gutter="35">
         <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" class="mb20">
           <el-form-item label="旧密码"
@@ -44,7 +44,7 @@
 
 <script setup lang="ts" name="ResetPassword">
 import {reactive, ref} from 'vue';
-import {useUserApi} from "/@/api/useSystemApi/user";
+import {useIdCenterApi} from "/@/api/useSystemApi/idCenter";
 import {ElMessage} from "element-plus";
 
 const formRef = ref()
@@ -70,9 +70,17 @@ const validateReNewPwd = (rule: any, value: string, callback: any) => {
 const resetPassword = () => {
   formRef.value.validate((valid: boolean) => {
     if (valid) {
-      useUserApi().resetPassword(state.form).then(() => {
+      useIdCenterApi().resetPassword(state.form).then(() => {
         state.isShowDialog = false
+        state.form = {
+          old_pwd: '',
+          new_pwd: '',
+          re_new_pwd: ''
+        }
         ElMessage.success('修改成功， 下次登录请使用新密码登录😊')
+      }).catch((error: any) => {
+        console.error('修改密码失败:', error)
+        ElMessage.error('修改密码失败，请检查旧密码是否正确')
       })
     }
   })

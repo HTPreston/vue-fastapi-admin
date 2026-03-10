@@ -5,6 +5,7 @@ import {createPinia, storeToRefs} from 'pinia';
 import {useKeepALiveNames} from '/@/stores/keepAliveNames';
 import {useRoutesList} from '/@/stores/routesList';
 import {useThemeConfig} from '/@/stores/themeConfig';
+import {useUserStore} from '/@/stores/user';
 import {Session} from '/@/utils/storage';
 import {notFoundAndNoPower, staticRoutes} from '/@/router/route';
 import {initFrontEndControlRoutes} from '/@/router/frontEnd';
@@ -102,7 +103,8 @@ const {isRequestRoutes} = themeConfig.value;
 	NProgress.configure({showSpinner: false});
 	if (to.meta.title) NProgress.start();
 	const token = Session.get('token');
-	if (to.path === '/login' && !token) {
+	
+	if ((to.path === '/login' || to.path === '/register') && !token) {
 		next();
 		NProgress.done();
 	} else {
@@ -110,10 +112,18 @@ const {isRequestRoutes} = themeConfig.value;
 			next(`/login?redirect=${to.path}&params=${JSON.stringify(to.query ? to.query : to.params)}`);
 			Session.clear();
 			NProgress.done();
-		} else if (token && to.path === '/login') {
+		} else if (token && (to.path === '/login' || to.path === '/register')) {
 			next('/home');
 			NProgress.done();
 		} else {
+			// 确保用户信息已加载
+			const userStore = useUserStore();
+			
+			// 如果用户信息未加载或 authBtnList 为空，则加载用户信息
+			if (!userStore.userInfos.id || userStore.userInfos.authBtnList.length === 0) {
+				await userStore.setUserInfos(true); // 强制刷新用户信息
+			}
+			
 			const storesRoutesList = useRoutesList();
 			const {routesList, isGet} = storeToRefs(storesRoutesList);
 			if (routesList.value.length === 0 && !isGet.value) {

@@ -56,6 +56,14 @@ export function useUserApi() {
         method: 'POST',
         data: {}
       })
-    }
+    },
+    register: (data?: object) => {
+      return request({
+        url: '/user/userRegister',
+        method: 'POST',
+        data,
+        noToken: true, // 注册接口不需要 token
+      } as any);
+    },
   };
 }

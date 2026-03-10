@@ -9,11 +9,14 @@ from celery._state import _task_stack
 from celery.signals import setup_logging
 from celery.worker.request import Request
 
-from app.config import config
+from config import config
 from app.corelibs.local import g
 from app.corelibs.logger import InterceptHandler, logger
-from app.db.redis import init_redis_pool
+from app.db.redis import RedisPool
 from app.utils.async_converter import AsyncIOPool
+
+
+redis_pool = RedisPool()
 
 
 class TaskRequest(Request):

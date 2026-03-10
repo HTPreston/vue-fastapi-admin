@@ -23,7 +23,7 @@ class Configs(BaseSettings):
     STATIC_DIR: str = 'static'  # 静态文件目录
     GLOBAL_ENCODING: str = 'utf8'  # 全局编码
     CORS_ORIGINS: typing.List[typing.Any] = ["*"]  # 跨域请求
-    WHITE_ROUTER: typing.List[str] = ["/api/user/login"]  # 路由白名单，不需要鉴权
+    WHITE_ROUTER: typing.List[str] = ["/api/user/login", "/api/user/userRegister"]  # 路由白名单，不需要鉴权
 
     SECRET_KEY: str = "kPBDjVk0o3Y1wLxdODxBpjwEjo7-Euegg4kdnzFIRjc"  # 密钥(每次重启服务密钥都会改变, token解密失败导致过期, 可设置为常量)
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 1  # token过期时间: 60 minutes * 24 hours * 1 days = 1 days
@@ -64,7 +64,6 @@ class Configs(BaseSettings):
     # 传递给底层传输的附加选项的字典。设置可见性超时的示例（Redis 和 SQS 传输支持）
     result_backend_transport_options: typing.Dict[str, typing.Any] = {'visibility_timeout': 3600}
     include: typing.List[typing.Any] = [
-        'celery_worker.tasks.test_case',
         'celery_worker.tasks.common',
     ]
     # task_queues = (

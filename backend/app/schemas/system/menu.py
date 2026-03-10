@@ -20,7 +20,7 @@ class MenuIn(BaseModel):
     isAffix: typing.Optional[bool] = Field(False, description='是否固定')
     isIframe: typing.Optional[bool] = Field(False, description='是否内嵌')
     icon: typing.Optional[str] = Field("", description='菜单图标')
-    parent_id: typing.Optional[str] = Field(..., description='父级菜单id')
+    parent_id: typing.Optional[int] = Field(..., description='父级菜单id')
     redirect: typing.Optional[str] = Field(None, description='重定向路由')
     sort: typing.Optional[int] = Field(0, description='排序')
     menu_type: typing.Optional[int] = Field(..., description='菜单类型')

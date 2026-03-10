@@ -17,7 +17,7 @@
  * @method setSql 数据查询工具，设置执行结果
  */
 declare type MittType<T = any> = {
-  openSetingsDrawer?: string;
+  openSettingsDrawer?: string;
   restoreDefault?: string;
   setSendColumnsChildren: T;
   setSendClassicChildren: T;

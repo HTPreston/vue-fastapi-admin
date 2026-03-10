@@ -37,6 +37,6 @@ export const useMenuInfo = defineStore('useMenuInfo', {
 			if (Session.get('menuData')) {
 				return Session.get('menuData');
 			}
-		}
+		},
 	},
 });

@@ -50,29 +50,28 @@ class TimedTask(Base):
 
     @classmethod
     async def get_list(cls, params: TimedTasksQuerySchema):
+        """
+        获取定时任务列表
+
+        :param params: 查询参数
+        :type params: TimedTasksQuerySchema
+        :return: 分页数据
+        :rtype: typing.Dict[typing.Text, typing.Any]
+        """
         q = [cls.enabled_flag == 1]
-        u = aliased(User)
         if params.id:
             q.append(cls.id == params.id)
         if params.name:
-            q.append(cls.name.like('%{}%'.format(params.name)))
-        if params.created_by_name:
-            q.append(u.nickname.like('%{}%'.format(params.created_by_name)))
-        if params.user_ids:
-            q.append(cls.created_by.in_(params.user_ids))
-        if params.created_by:
-            q.append(cls.created_by == params.created_by)
+            # 转义LIKE特殊字符 % 和 _，防止通配符注入
+            name = params.name.replace('%', '\\%').replace('_', '\\_')
+            q.append(cls.name.like(f'%{name}%'))
         if params.project_ids:
             q.append(cls.project_id.in_(params.project_ids))
 
         stmt = select(cls).where(*q) \
-            .outerjoin(u, u.id == cls.created_by) \
             .outerjoin(ModuleInfo, ModuleInfo.id == cls.module_id) \
             .outerjoin(ProjectInfo, cls.project_id == ProjectInfo.id) \
-            .outerjoin(User, User.id == cls.updated_by) \
             .with_only_columns(*cls.get_table_columns(),
-                               u.nickname.label('created_by_name'),
-                               User.nickname.label('updated_by_name'),
                                ProjectInfo.name.label('project_name'),
                                ModuleInfo.name.label('module_name')) \
             .order_by(cls.id.desc())

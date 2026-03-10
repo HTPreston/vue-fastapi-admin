@@ -24,7 +24,8 @@ const service: AxiosInstance = axios.create({
 service.interceptors.request.use(
 	(config: AxiosRequestConfig) => {
 		// 在发送请求之前做些什么 token
-		if (Session.get('token')) {
+		// 如果请求配置了 noToken: true，则不携带 token
+		if (Session.get('token') && !(config as any).noToken) {
 			config.headers!['token'] = `${Session.get('token')}`;
 		}
 		return config;
@@ -57,7 +58,7 @@ service.interceptors.response.use(
 			} else {
 				ElMessage.error(res.msg || '接口错误！');
 			}
-			return Promise.reject(service.interceptors.response);
+			return Promise.reject(response);
 		} else {
 			return response.data;
 		}

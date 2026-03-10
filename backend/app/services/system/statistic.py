@@ -33,7 +33,7 @@ class StatisticService:
         # case 分布
         pcn_sql = ApiInfo.statistic_project_api_number()
         pcns_data = pcn_sql.group_by(ProjectInfo.name).order_by(text('case_num desc')).all()
-        ucns_data = pcn_sql.group_by(User.nickname).order_by(text('case_num desc')).all()
+        ucns_data = pcn_sql.group_by(User.username).order_by(text('case_num desc')).all()
 
         # 套件分布
         scn_sql = ApiCase.statistic_project_case_number()

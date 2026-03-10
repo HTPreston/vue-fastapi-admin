@@ -15,12 +15,14 @@
           </el-col>
 
           <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
-            <el-form-item label="用户昵称" prop="nickname">
-              <el-input v-model="state.form.nickname" placeholder="请输入用户昵称" clearable></el-input>
+            <el-form-item label="手机号" prop="phone">
+              <el-input v-model="state.form.phone" placeholder="请输入手机号" clearable></el-input>
             </el-form-item>
           </el-col>
 
-          <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
+
+
+          <!-- <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
             <el-form-item label="关联角色" prop="roles">
               <el-select v-model="state.form.roles" multiple placeholder="请选择" clearable class="w100">
                 <el-option
@@ -31,7 +33,7 @@
                 ></el-option>
               </el-select>
             </el-form-item>
-          </el-col>
+          </el-col> -->
 
           <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
             <el-form-item label="邮箱" prop="email">
@@ -45,16 +47,17 @@
                          :active-value="1"
                          :inactive-value="0"
                          inline-prompt
-                         active-text="启"
-                         inactive-text="禁"></el-switch>
+                         active-text="启用"
+                         inactive-text="禁用"></el-switch>
             </el-form-item>
           </el-col>
 
           <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
             <el-form-item label="用户类型">
-              <el-select v-model="state.form.user_type" placeholder="请选择" clearable class="w100">
+              <el-select v-model="state.form.role_type" placeholder="请选择" clearable class="w100">
                 <el-option label="超级管理员" :value="10"></el-option>
-                <el-option label="普通用户" :value="20"></el-option>
+                <el-option label="管理员" :value="20"></el-option>
+                <el-option label="普通用户" :value="30"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -79,28 +82,22 @@
 </template>
 
 <script lang="ts" setup name="SaveOrUpdateUser">
-import {reactive, ref} from 'vue';
+import {reactive, ref, PropType} from 'vue';
 import {useUserApi} from "/@/api/useSystemApi/user";
 import {ElMessage} from "element-plus";
 
 const emit = defineEmits(["getList"])
 
-const props = defineProps({
-  roleList: {
-    type: Array,
-    default: () => []
-  }
-})
+
 
 const createForm = () => {
   return {
     id: null, // 账户名称
     username: '', // 账户名称
-    nickname: '', // 用户昵称
-    roles: '', // 关联角色
+    phone: '', // 手机号
     email: '', // 邮箱
     status: 1, // 用户状态 1启用 2 禁用
-    user_type: 20, // 用户类型
+    role_type: 30, // 用户类型
     remarks: '', // 描述
     updated_by: null, // 更新人
   }
@@ -113,8 +110,7 @@ const state = reactive({
   form: createForm(),
   rules: {
     username: [{required: true, message: '请输入用户名称', trigger: 'blur'},],
-    roles: [{required: true, message: '请选择角色', trigger: 'blur'},],
-    nickname: [{required: true, message: '请输入用户昵称', trigger: 'blur'},],
+    phone: [{required: true, message: '请输入手机号', trigger: 'blur'}],
   }
 });
 

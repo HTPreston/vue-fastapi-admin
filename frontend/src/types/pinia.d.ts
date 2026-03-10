@@ -7,10 +7,11 @@ declare interface UserInfos<T = any> {
 	id: string | null,
 	avatar: string;
 	authBtnList: string[];
+	buttons: string[];
 	roles: string[];
 	time: number;
 	username: string;
-	nickname: string;
+	phone: string;
 	user_type: number | null;
 	login_time: string;
 	lastLoginTime: string;
@@ -25,10 +26,6 @@ declare interface MenuDataState<T = any> {
 	};
 }
 
-// 数据字典
-declare interface LookUpState<T = any> {
-	lookupDict: T[];
-}
 
 // 环境
 declare interface EnvironmentsState<T = any> {

@@ -1,28 +1,26 @@
 <template>
   <div class="personal layout-pd">
-    <el-row>
+    <el-row :gutter="20">
       <!-- 个人信息 -->
       <el-col :xs="24" :sm="8" style="padding: 0 10px">
-        <z-card>
+        <z-card class="personal-card" shadow="hover">
           <div class="personal-user">
             <div class="personal-user-avatar" @click="onCropperDialogOpen">
-
-              <el-avatar :size="100"
-                         :src="state.userInfoForm.avatar"
-                         title="点击更换头像"
-                         :style="state.userInfoForm.avatar? {'--el-avatar-bg-color': 'transparent'}: {}"
-                         style="cursor: pointer; ">
-                <span style="font-size: 40px">{{
-                    state.userInfoForm?.nickname ? state.userInfoForm?.nickname.slice(0, 1).toUpperCase() : ""
-                  }}</span>
+              <el-avatar 
+                :size="100"
+                :src="state.userInfoForm.avatar"
+                title="点击更换头像"
+                :style="state.userInfoForm.avatar ? {'--el-avatar-bg-color': 'transparent'} : {}"
+                style="cursor: pointer;"
+              >
+                <span style="font-size: 40px">{{ state.userInfoForm.username ? state.userInfoForm.username.slice(0, 1).toUpperCase() : '' }}</span>
               </el-avatar>
-
             </div>
             <div class="personal-user-right">
               <el-row>
                 <el-col :span="24">
                   <div class="personal-user-name">
-                    <strong>{{ state.userInfoForm.nickname }}</strong>
+                    <strong>{{ state.userInfoForm.username }}</strong>
                   </div>
                 </el-col>
                 <el-col :span="24">
@@ -32,44 +30,28 @@
                     </div>
                   </div>
                 </el-col>
-
                 <el-col :span="24">
                   <el-divider content-position="left">个人信息</el-divider>
                 </el-col>
+
                 <el-col :span="24">
                   <div class="personal-item">
-                    <div class="personal-item-label">昵称：</div>
-                    <div class="personal-item-value">{{ userStores.userInfos.nickname }}</div>
+                    <div class="personal-item-label">用户名：</div>
+                    <div class="personal-item-value">{{ state.userInfoForm.username }}</div>
                   </div>
                 </el-col>
 
                 <el-col :span="24">
                   <div class="personal-item">
-                    <div class="personal-item-label">身份：</div>
-                    <div class="personal-item-value">超级管理</div>
+                    <div class="personal-item-label">手机号：</div>
+                    <div class="personal-item-value">{{ userInfos.phone }}</div>
                   </div>
                 </el-col>
-
-                <el-col :span="24">
-                  <div class="personal-item">
-                    <div class="personal-item-label">登录IP：</div>
-                    <div class="personal-item-value">192.168.1.1</div>
-                  </div>
-                </el-col>
-
+                
                 <el-col :span="24">
                   <div class="personal-item">
                     <div class="personal-item-label">登录时间：</div>
                     <div class="personal-item-value">{{ userInfos.login_time }}</div>
-                  </div>
-                </el-col>
-
-                <el-col :span="24">
-                  <div class="personal-item">
-                    <div class="personal-item-label">密码：</div>
-                    <div class="personal-item-value">
-                      <el-button text type="primary" @click="updatePassword">修改密码</el-button>
-                    </div>
                   </div>
                 </el-col>
                 <el-col :span="24">
@@ -77,131 +59,189 @@
                     <el-icon>
                       <ele-Position/>
                     </el-icon>
-                    更新个人信息
+                    个人信息
                   </el-button>
                 </el-col>
-
                 <el-col :span="24">
                   <el-divider content-position="left">个性标签</el-divider>
                 </el-col>
                 <el-col :span="24">
                   <div class="personal-item-tag">
                     <el-tag
-                        v-for="tag in state.userInfoForm.tags"
-                        :key="tag"
-                        size="default"
-                        type="success"
-                        style="{margin-left: 0.25rem;margin-right: 0.25rem;}"
-                        :disable-transitions="false"
-                    >{{ tag }}
-                    </el-tag>
+                      v-for="tag in state.userInfoForm.tags"
+                      :key="tag"
+                      size="default"
+                      type="success"
+                      :style="{ marginLeft: '0.25rem', marginRight: '0.25rem' }"
+                      :disable-transitions="false"
+                    >{{ tag }}</el-tag>
                   </div>
                 </el-col>
-
               </el-row>
             </div>
           </div>
         </z-card>
       </el-col>
-
-      <!-- 消息通知 -->
+      <!-- 登录记录 -->
       <el-col :xs="24" :sm="16" class="pl15 personal-info">
-        <z-card shadow="hover">
+        <z-card class="personal-card" shadow="hover">
           <template #header>
-            <span>消息通知</span>
+            <span>登录记录</span>
           </template>
-          <div class="personal-info-box">
-            <ul class="personal-info-ul">
-              <li v-for="(v, k) in state.newsInfoList" :key="k" class="personal-info-li">
-                <a :href="v.link" target="_block" class="personal-info-li-title">{{ v.title }}</a>
-              </li>
-            </ul>
+          <div class="login-record-box">
+            <el-table :data="state.loginRecords" style="width: 100%" size="small" v-loading="state.loading">
+              <el-table-column prop="user_name" label="用户名" width="120">
+                <template #default="{ row }">
+                  {{ row.user_name || '未知用户' }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="phone" label="手机号" width="120">
+                <template #default="{ row }">
+                  {{ row.phone || '未知手机号' }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="login_time" label="登录时间" width="160">
+                <template #default="{ row }">
+                  {{ row.login_time || '未知时间' }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="login_ip" label="IP地址" width="130">
+                <template #default="{ row }">
+                  {{ row.login_ip || '未知IP' }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="login_type" label="登录方式" width="100">
+                <template #default="{ row }">
+                  <el-tag size="small" :type="row.login_type === '账号密码' ? 'primary' : 'success'">
+                    {{ row.login_type || '账号密码' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="ret_code" label="状态" width="80">
+                <template #default="{ row }">
+                  <el-tag size="small" :type="row.ret_code === '0' ? 'success' : 'danger'">
+                    {{ row.ret_code === '0' ? '成功' : '失败' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+            </el-table>
+            <div class="pagination-container" v-if="state.loginRecordsTotal > 0">
+              <el-pagination
+                small
+                background
+                layout="prev, pager, next"
+                :total="state.loginRecordsTotal"
+                :page-size="state.loginRecordsPageSize"
+                :current-page="state.loginRecordsPage"
+                @current-change="handleLoginRecordsPageChange"
+              />
+            </div>
+            <el-empty v-if="!state.loading && state.loginRecords.length === 0" description="暂无登录记录" />
           </div>
         </z-card>
       </el-col>
-
-
     </el-row>
     <!-- 更新信息 -->
-    <el-dialog title="更新"
-               destroy-on-close
-               v-model="state.showEditPage">
-      <el-row>
-        <el-col :span="24" style="padding: 0 10px">
-          <z-card class="personal-edit">
-            <div class="personal-edit-title">基本信息</div>
-            <el-form :model="state.userInfoForm" size="default" label-width="auto" class="mt35 mb35">
-              <el-row :gutter="35">
-                <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" class="mb20">
-                  <el-form-item label="昵称">
-                    <el-input v-model="state.userInfoForm.nickname" placeholder="请输入昵称" clearable></el-input>
-                  </el-form-item>
-                </el-col>
-                <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" class="mb20">
-                  <el-form-item label="签名">
-                    <el-input v-model="state.userInfoForm.remarks" placeholder="请输入签名" clearable></el-input>
-                  </el-form-item>
-                </el-col>
+    <el-dialog title="更新个人信息" destroy-on-close v-model="state.showEditPage" :close-on-click-modal="true" width="30%">
+      <z-card class="personal-edit">
+        <div class="personal-edit-title">基本信息</div>
+        <el-form :model="state.userInfoForm" size="default" label-width="auto" class="mt35 mb35">
+          <el-row :gutter="35">
 
-                <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" class="mb20">
-                  <el-form-item label="个性标签">
-                    <el-tag
-                        v-for="tag in state.userInfoForm.tags"
-                        :key="tag"
-                        size="default"
-                        type="success"
-                        closable
-                        style="{margin-left: 0.25rem;margin-right: 0.25rem;}"
-                        :disable-transitions="false"
-                        @close="removeTag(tag)"
-                    >{{ tag }}
-                    </el-tag>
-
-                    <el-input
-                        v-if="state.editTag"
-                        ref="UserTagInputRef"
-                        v-model="state.tagValue"
-                        class="ml-1 w-20"
-                        size="small"
-                        @keyup.enter="addTag"
-                        @blur="addTag"
-                        style="width: 100px"
-                    />
-                    <el-button v-else size="small" @click="showEditTag">
-                      + New Tag
-                    </el-button>
-                    <!--                  <el-input v-model="state.userInfoForm.tags" placeholder="请输入签名" clearable></el-input>-->
-                  </el-form-item>
-                </el-col>
-
-                <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" class="mb20">
-                  <el-form-item label="邮箱">
-                    <el-input v-model="state.userInfoForm.email" placeholder="请输入邮箱" clearable></el-input>
-                  </el-form-item>
-                </el-col>
-              </el-row>
-            </el-form>
-          </z-card>
-        </el-col>
-      </el-row>
+            <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" class="mb20">
+              <el-form-item label="用户名">
+                <el-input v-model="state.userInfoForm.username" placeholder="请输入用户名" clearable></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" class="mb20">
+              <el-form-item label="手机号">
+                <el-input v-model="state.userInfoForm.phone" placeholder="请输入手机号" disabled></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" class="mb20">
+              <el-form-item label="邮箱">
+                <el-input v-model="state.userInfoForm.email" :placeholder="state.userInfoForm.email ? '' : '未绑定'" disabled></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" class="mb20">
+              <el-form-item label="签名">
+                <el-input v-model="state.userInfoForm.remarks" placeholder="请输入签名" clearable></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24" class="mb20">
+              <el-form-item label="个性标签">
+                <el-tag
+                  v-for="tag in state.userInfoForm.tags"
+                  :key="tag"
+                  size="default"
+                  type="success"
+                  closable
+                  :style="{ marginLeft: '0.25rem', marginRight: '0.25rem' }"
+                  :disable-transitions="false"
+                  @close="removeTag(tag)"
+                >{{ tag }}</el-tag>
+                <el-input
+                  v-if="state.editTag"
+                  ref="UserTagInputRef"
+                  v-model="state.tagValue"
+                  class="ml-1 w-20"
+                  size="small"
+                  @keyup.enter="addTag"
+                  @blur="addTag"
+                  style="width: 100px"
+                />
+                <el-button v-else size="small" @click="showEditTag">+ New Tag</el-button>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <div class="personal-edit-footer">
+            <el-button type="primary" @click="save">更新</el-button>
+          </div>
+        </el-form>
+        <div class="personal-edit-title mt35">账户安全</div>
+        <div class="personal-security-buttons">
+          <el-button type="primary" @click="updatePassword">修改密码</el-button>
+          <el-button type="warning" @click="updatePhone">修改手机号</el-button>
+          <el-button :type="state.userInfoForm.email ? 'warning' : 'success'" @click="updateEmail">
+            {{ state.userInfoForm.email ? '修改邮箱' : '绑定邮箱' }}
+          </el-button>
+        </div>
+      </z-card>
+    </el-dialog>
+    
+    <el-dialog title="修改手机号" destroy-on-close v-model="state.showPhoneDialog" width="400px">
+      <el-form :model="state.phoneForm" :rules="state.phoneRules" ref="phoneFormRef" size="default" label-width="80px">
+        <el-form-item label="手机号" prop="phone">
+          <el-input v-model="state.phoneForm.phone" placeholder="请输入新手机号" clearable></el-input>
+        </el-form-item>
+      </el-form>
       <template #footer>
-        <el-button type="primary" @click="save">
-          更新
-        </el-button>
+        <el-button @click="state.showPhoneDialog = false">取 消</el-button>
+        <el-button type="primary" @click="savePhone">确 定</el-button>
       </template>
     </el-dialog>
 
+    <el-dialog :title="state.userInfoForm.email ? '修改邮箱' : '绑定邮箱'" destroy-on-close v-model="state.showEmailDialog" width="400px">
+      <el-form :model="state.emailForm" :rules="state.emailRules" ref="emailFormRef" size="default" label-width="80px">
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="state.emailForm.email" placeholder="请输入邮箱" clearable></el-input>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="state.showEmailDialog = false">取 消</el-button>
+        <el-button type="primary" @click="saveEmail">确 定</el-button>
+      </template>
+    </el-dialog>
+    
     <SeePictures ref="SeePicturesRef" @updateAvatar="updateAvatar"></SeePictures>
-
     <ResetPassword ref="ResetPasswordRef"></ResetPassword>
   </div>
 </template>
 
 <script setup lang="ts" name="personal">
-import {computed, defineAsyncComponent, nextTick, onMounted, reactive, ref} from 'vue';
-import {formatAxis} from '/@/utils/formatTime';
+import {defineAsyncComponent, nextTick, onMounted, reactive, ref} from 'vue';
 import {useUserStore} from "/@/stores/user";
-import {useUserApi} from "/@/api/useSystemApi/user";
+import {useIdCenterApi} from "/@/api/useSystemApi/idCenter";
 import {ElMessage} from "element-plus";
 import {storeToRefs} from "pinia";
 import ResetPassword from "/@/views/system/personal/ResetPassword.vue";
@@ -209,52 +249,85 @@ import ResetPassword from "/@/views/system/personal/ResetPassword.vue";
 const SeePictures = defineAsyncComponent(() => import("/@/components/seePictures/index.vue"))
 const SeePicturesRef = ref();
 const UserTagInputRef = ref();
+const phoneFormRef = ref();
+const emailFormRef = ref();
 const ResetPasswordRef = ref();
-// 用户信息
+
 const userStores = useUserStore()
 const {userInfos} = storeToRefs(userStores);
 
+interface LoginRecord {
+  login_time: string;
+  login_ip: string;
+  login_type: string;
+  ret_code: string;
+  user_name: string;
+  phone: string;
+}
 
-// 定义变量内容
 const state = reactive({
-  newsInfoList: [],
+  loginRecords: [] as LoginRecord[],
+  loginRecordsTotal: 0,
+  loginRecordsPage: 1,
+  loginRecordsPageSize: 10,
+  loading: false,
   recommendList: [],
   userInfoForm: {
-    id: null,
+    id: null as number | null,
     username: '',
-    nickname: '',
+    phone: '',
     avatar: '',
     remarks: '',
     email: '',
-    tags: [],
-  } as any,
+    tags: [] as string[],
+  },
   editTag: false,
   tagValue: "",
   showEditPage: false,
+  showPhoneDialog: false,
+  showEmailDialog: false,
   cropperImg: '',
+  phoneForm: {
+    phone: ''
+  },
+  phoneRules: {
+    phone: [{required: true, message: '请输入手机号', trigger: 'blur'}]
+  },
+  emailForm: {
+    email: ''
+  },
+  emailRules: {
+    email: [
+      {required: true, message: '请输入邮箱', trigger: 'blur'},
+      {type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur'}
+    ]
+  }
 });
 
 const getUserInfo = async () => {
-  console.log(userInfos.value, '---> userInfos')
-  let {data} = await useUserApi().getUserInfo({id: userInfos.value.id})
-  // if (!data.avatar) {
-  //   data.avatar = "data:image/png;base64,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"
-  // }
-  state.userInfoForm = data
+  try {
+    let {data} = await useIdCenterApi().getUserInfo()
+    if (data) {
+      state.userInfoForm = {
+        id: data.id || null,
+        username: data.username || '',
+        phone: data.phone || '',
+        avatar: data.avatar || '',
+        remarks: data.remarks || '',
+        email: data.email || '',
+        tags: data.tags || [],
+      }
+    }
+  } catch (error) {
+    console.error('获取个人信息失败:', error)
+    ElMessage.error('获取个人信息失败')
+  }
 }
 
-// 当前时间提示语
-const currentTime = computed(() => {
-  return formatAxis(new Date());
-});
-
-// 打开裁剪弹窗
 const onCropperDialogOpen = () => {
   SeePicturesRef.value.openDialog(state.userInfoForm.avatar);
 };
 
-
-// tags
 const showEditTag = () => {
   state.editTag = true
   nextTick(() => {
@@ -262,7 +335,7 @@ const showEditTag = () => {
   })
 }
 
-const removeTag = (tag) => {
+const removeTag = (tag: string) => {
   state.userInfoForm.tags.splice(state.userInfoForm.tags.indexOf(tag), 1)
 }
 
@@ -276,27 +349,108 @@ const addTag = () => {
 }
 
 const save = async () => {
-  let {data} = await useUserApi().saveOrUpdate(state.userInfoForm)
-  ElMessage.success("更新成功!╰(*°▽°*)╯😍")
-  state.showEditPage = false
+  try {
+    await useIdCenterApi().updateProfile({
+      username: state.userInfoForm.username,
+      phone: state.userInfoForm.phone,
+      email: state.userInfoForm.email,
+      avatar: state.userInfoForm.avatar,
+      remarks: state.userInfoForm.remarks,
+      tags: state.userInfoForm.tags,
+    })
+    ElMessage.success("更新成功!╰(*°▽°*)╯😍")
+    state.showEditPage = false
+    await getUserInfo()
+    await userStores.setUserInfos(true)
+  } catch (error) {
+    console.error('更新失败:', error)
+    ElMessage.error('更新失败，请重试')
+  }
 }
 
 const updateAvatar = async (img: string) => {
-  state.userInfoForm.avatar = img
-  await useUserApi().updateUserAvatar({id: state.userInfoForm.id, avatar: img})
-  userInfos.value.avatar = img
-  await userStores.updateUserInfo(userInfos.value)
-  ElMessage.success("更新成功!╰(*°▽°*)╯😍")
-
+  try {
+    state.userInfoForm.avatar = img
+    await useIdCenterApi().updateAvatar({avatar: img})
+    userInfos.value.avatar = img
+    await userStores.updateUserInfo(userInfos.value)
+    ElMessage.success("更新成功!╰(*°▽°*)╯😍")
+  } catch (error) {
+    console.error('更新头像失败:', error)
+    ElMessage.error('更新头像失败，请重试')
+  }
 }
 
 const updatePassword = () => {
   ResetPasswordRef.value.openDialog(userInfos.value)
 }
 
+const updatePhone = () => {
+  state.phoneForm.phone = userInfos.value.phone || ''
+  state.showPhoneDialog = true
+}
+
+const savePhone = async () => {
+  try {
+    await phoneFormRef.value.validate()
+    await useIdCenterApi().updatePhone({phone: state.phoneForm.phone})
+    userInfos.value.phone = state.phoneForm.phone
+    await userStores.updateUserInfo(userInfos.value)
+    ElMessage.success("更新成功!╰(*°▽°*)╯😍")
+    state.showPhoneDialog = false
+  } catch (error) {
+    console.error('更新手机号失败:', error)
+    ElMessage.error('更新手机号失败，请重试')
+  }
+}
+
+const updateEmail = () => {
+  state.emailForm.email = userInfos.value.email || ''
+  state.showEmailDialog = true
+}
+
+const saveEmail = async () => {
+  try {
+    await emailFormRef.value.validate()
+    await useIdCenterApi().updateEmail({email: state.emailForm.email})
+    userInfos.value.email = state.emailForm.email
+    state.userInfoForm.email = state.emailForm.email
+    await userStores.updateUserInfo(userInfos.value)
+    ElMessage.success("更新成功!╰(*°▽°*)╯😍")
+    state.showEmailDialog = false
+  } catch (error) {
+    console.error('更新邮箱失败:', error)
+    ElMessage.error('更新邮箱失败，请重试')
+  }
+}
+
+const getLoginRecords = async () => {
+  state.loading = true
+  try {
+    const {data} = await useIdCenterApi().getLoginRecords({
+      page: state.loginRecordsPage,
+      pageSize: state.loginRecordsPageSize
+    })
+    if (data) {
+      state.loginRecords = data.rows || []
+      state.loginRecordsTotal = data.rowTotal || 0
+    }
+  } catch (error) {
+    console.error('获取登录记录失败:', error)
+  } finally {
+    state.loading = false
+  }
+}
+
+const handleLoginRecordsPageChange = (page: number) => {
+  state.loginRecordsPage = page
+  getLoginRecords()
+}
+
 onMounted(() => {
   nextTick(() => {
     getUserInfo()
+    getLoginRecords()
   })
 })
 </script>
@@ -305,12 +459,25 @@ onMounted(() => {
 @import '../../../theme/mixins/index.scss';
 
 .personal {
+  .personal-card {
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+  }
+
+  :deep(.el-card__header) {
+    flex-shrink: 0;
+  }
+
+  :deep(.el-card__body) {
+    flex: 1;
+    overflow: auto;
+  }
+
   .personal-user {
-    //height: 130px;
-    //display: flex;
     align-items: center;
     padding: 20px;
-
 
     .personal-user-avatar {
       width: 100px;
@@ -326,7 +493,6 @@ onMounted(() => {
         border-radius: 50%;
       }
     }
-
 
     .personal-user-right {
       flex: 1;
@@ -375,7 +541,6 @@ onMounted(() => {
   }
 
   .personal-info {
-
     .personal-info-box {
       height: 130px;
       overflow: hidden;
@@ -399,6 +564,16 @@ onMounted(() => {
             cursor: pointer;
           }
         }
+      }
+    }
+
+    .login-record-box {
+      min-height: 300px;
+
+      .pagination-container {
+        margin-top: 15px;
+        display: flex;
+        justify-content: flex-end;
       }
     }
   }
@@ -454,46 +629,24 @@ onMounted(() => {
       &::after {
         content: '';
         width: 2px;
-        height: 10px;
+        height: 16px;
+        background-color: var(--el-color-primary);
         position: absolute;
         left: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        background: var(--el-color-primary);
+        top: 2px;
       }
     }
 
-    .personal-edit-safe-box {
-      border-bottom: 1px solid var(--el-border-color-light, #ebeef5);
-      padding: 15px 0;
+    .personal-security-buttons {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+    }
 
-      .personal-edit-safe-item {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-
-        .personal-edit-safe-item-left {
-          flex: 1;
-          overflow: hidden;
-
-          .personal-edit-safe-item-left-label {
-            color: var(--el-text-color-regular);
-            margin-bottom: 5px;
-          }
-
-          .personal-edit-safe-item-left-value {
-            color: var(--el-text-color-secondary);
-            @include text-ellipsis(1);
-            margin-right: 15px;
-          }
-        }
-      }
-
-      &:last-of-type {
-        padding-bottom: 0;
-        border-bottom: none;
-      }
+    .personal-edit-footer {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
     }
   }
 }

@@ -137,21 +137,6 @@ export const dynamicRoutes: Array<RouteRecordRaw> = [
 							icon: 'ele-OfficeBuilding',
 						},
 					},
-					{
-						path: '/system/dic',
-						name: 'systemDic',
-						component: () => import('/src/views/system/dic/index.vue'),
-						meta: {
-							title: '字典管理',
-							isLink: '',
-							isHide: false,
-							isKeepAlive: true,
-							isAffix: false,
-							isIframe: false,
-							roles: ['admin'],
-							icon: 'ele-SetUp',
-						},
-					},
 				],
 			},
 		],
@@ -193,18 +178,28 @@ export const notFoundAndNoPower: Array<RouteRecordRaw> = [
 ];
 
 /**
- * 定义静态路由（默认路由）
- * 此路由不要动，前端添加路由的话，请在 `dynamicRoutes 数组` 中添加
- * @description 前端控制直接改 dynamicRoutes 中的路由，后端控制不需要修改，请求接口路由数据时，会覆盖 dynamicRoutes 第一个顶级 children 的内容（全屏，不包含 layout 中的路由出口）
+ * 定义静态路由
+ * @description 此路由不要动，前端添加路由的话，请在 `dynamicRoutes` 中添加
  * @returns 返回路由菜单数据
  */
 export const staticRoutes: Array<RouteRecordRaw> = [
 	{
 		path: '/login',
 		name: 'login',
-		component: () => import('/src/views/login/index.vue'),
+		component: () => import('/@/views/login/index.vue'),
 		meta: {
 			title: '登录',
+			isHide: true,
 		},
 	},
+	{
+		path: '/register',
+		name: 'register',
+		component: () => import('/@/views/register/index.vue'),
+		meta: {
+			title: '注册',
+			isHide: true,
+		},
+	},
+
 ];

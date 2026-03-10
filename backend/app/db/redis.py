@@ -18,7 +18,26 @@ class MyAsyncRedis(aioredis.Redis):
     #     super(RedisPlus, self).__init__(connection_pool=connection_pool)
     async def get(self, name: str) -> typing.Any:
         data = await super(MyAsyncRedis, self).get(name)
-        return json.loads(data) if data else None
+        if data:
+            try:
+                # 检查数据类型，如果已经是字典或列表，直接返回
+                if isinstance(data, (dict, list)):
+                    return data
+                # 如果是 bytes 类型，先解码
+                if isinstance(data, bytes):
+                    data = data.decode('utf-8')
+                # 尝试解析 JSON
+                result = json.loads(data)
+                # 如果解析结果是字符串，可能是双重转义的 JSON，再次解析
+                if isinstance(result, str):
+                    try:
+                        result = json.loads(result)
+                    except Exception:
+                        pass
+                return result
+            except Exception:
+                return None
+        return None
 
     async def set(
             self,

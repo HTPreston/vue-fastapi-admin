@@ -1,15 +1,14 @@
 <template>
   <div class="home-container layout-pd">
-    欢迎
-    <!--		<el-row :gutter="15" class="home-card-one mb15">-->
-    <!--			<el-col-->
-    <!--				:xs="24"-->
-    <!--				:sm="12"-->
-    <!--				:md="12"-->
-    <!--				:lg="6"-->
-    <!--				:xl="6"-->
-    <!--				v-for="(v, k) in state.homeOne"-->
-    <!--				:key="k"-->
+    		<!-- <el-row :gutter="15" class="home-card-one mb15"> -->
+    			<!-- <el-col -->
+    				<!-- :xs="24" -->
+    				<!-- :sm="12" -->
+    				<!-- :md="12" -->
+    				<!-- :lg="6" -->
+    				<!-- :xl="6" -->
+    				<!-- v-for="(v, k) in state.homeOne" -->
+    				<!-- :key="k" -->
     <!--				:class="{ 'home-media home-media-lg': k > 1, 'home-media-sm': k === 1 }"-->
     <!--			>-->
     <!--				<div class="home-card-item flex">-->
@@ -62,7 +61,7 @@
     <!--					<div style="height: 100%" ref="homeBarRef"></div>-->
     <!--				</div>-->
     <!--			</el-col>-->
-    <!--		</el-row>-->
+    <!--		</el-row> -->
   </div>
 </template>
 

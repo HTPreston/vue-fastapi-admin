@@ -16,7 +16,17 @@ import {storeToRefs} from "/@/stores";
 import {useRoutesList} from '/@/stores/routesList';
 import {useThemeConfig} from '/@/stores/themeConfig';
 import {useTagsViewRoutes} from '/@/stores/tagsViewRoutes';
+import {useUserStore} from '/@/stores/user';
 import mittBus from '/@/utils/mitt';
+
+// 定义 RouteItem 类型，与 RouteRecordRaw 兼容
+import type { RouteRecordRaw } from 'vue-router';
+
+// 重新定义 state 类型，使用 RouteRecordRaw[]
+interface State {
+  menuList: RouteRecordRaw[];
+  clientWidth: number;
+}
 
 // 引入组件
 const Logo = defineAsyncComponent(() => import('/@/layout/logo/index.vue'));
@@ -30,7 +40,13 @@ const {themeConfig} = storeToRefs(storesThemeConfig);
 const storesTagsViewRoutes = useTagsViewRoutes();
 const {routesList} = storeToRefs(stores);
 const {isTagsViewCurrenFull} = storeToRefs(storesTagsViewRoutes);
-const state = reactive({
+// 定义 state 类型
+interface State {
+  menuList: RouteRecordRaw[];
+  clientWidth: number;
+}
+
+const state = reactive<State>({
   menuList: [],
   clientWidth: 0,
 });
@@ -43,14 +59,14 @@ const setCollapseStyle = computed(() => {
   // 判断是否是手机端
   if (state.clientWidth <= 1000) {
     if (isCollapse) {
-      document.body.setAttribute('class', 'el-popup-parent--hidden');
-      const asideEle = document.querySelector('.layout-container');
-      const modeDivs = document.createElement('div');
-      modeDivs.setAttribute('class', 'layout-aside-mobile-mode');
-      asideEle.appendChild(modeDivs);
-      modeDivs.addEventListener('click', closeLayoutAsideMobileMode);
-      return [asideBrColor, 'layout-aside-mobile', 'layout-aside-mobile-open'];
-    } else {
+        document.body.setAttribute('class', 'el-popup-parent--hidden');
+        const asideEle = document.querySelector('.layout-container');
+        const modeDivs = document.createElement('div');
+        modeDivs.setAttribute('class', 'layout-aside-mobile-mode');
+        asideEle?.appendChild(modeDivs);
+        modeDivs.addEventListener('click', closeLayoutAsideMobileMode);
+        return [asideBrColor, 'layout-aside-mobile', 'layout-aside-mobile-open'];
+      } else {
       // 关闭弹窗
       closeLayoutAsideMobileMode();
       return [asideBrColor, 'layout-aside-mobile', 'layout-aside-mobile-close'];
@@ -86,24 +102,50 @@ const closeLayoutAsideMobileMode = () => {
 // 设置/过滤路由（非静态路由/是否显示在菜单中）
 const setFilterRoutes = () => {
   if (themeConfig.value.layout === 'columns') return false;
+  // 确保 routesList 有值才进行过滤
+  if (!routesList.value || routesList.value.length === 0) return false;
   state.menuList = filterRoutesFun(routesList.value);
 };
+// 获取当前用户的按钮权限列表
+const userStore = useUserStore();
+const userButtons = computed(() => userStore.userInfos.authBtnList || []);
+
+
+
 // 路由过滤递归函数
-const filterRoutesFun = <T extends RouteItem>(arr: T[]): T[] => {
+const filterRoutesFun = (arr: RouteRecordRaw[]): RouteRecordRaw[] => {
   return arr
       .filter((item) => !item.meta?.isHide)
       .map((item) => {
         item = Object.assign({}, item);
-        if (item.children) item.children = filterRoutesFun(item.children);
+        
+        // 递归处理子菜单
+        if (item.children) {
+          item.children = filterRoutesFun(item.children);
+        }
+        
         return item;
+      })
+      .filter((item) => {
+        // 过滤掉 null 值
+        if (!item) return false;
+        
+        // 如果菜单有自己的页面（component），保留
+        if (item.component) return true;
+        
+        // 如果没有 children，过滤掉
+        if (!item.children || item.children.length === 0) return false;
+        
+        // 有 children，保留
+        return true;
       });
 };
 // 设置菜单导航是否固定（移动端）
-const initMenuFixed = (clientWidth) => {
+const initMenuFixed = (clientWidth: number) => {
   state.clientWidth = clientWidth;
 };
 // 鼠标移入、移出
-const onAsideEnterLeave = (bool) => {
+const onAsideEnterLeave = (bool: boolean) => {
   let {layout} = themeConfig.value;
   if (layout !== 'columns') return false;
   if (!bool) mittBus.emit('restoreDefault');
@@ -145,6 +187,28 @@ watch(
     (val) => {
       let {layout, isClassicSplitMenu} = val;
       if (layout === 'classic' && isClassicSplitMenu) return false;
+      setFilterRoutes();
+    },
+    {
+      deep: true,
+    }
+);
+
+// 监听用户按钮权限变化，重新过滤路由
+watch(
+    userButtons,
+    () => {
+      setFilterRoutes();
+    },
+    {
+      deep: true,
+    }
+);
+
+// 监听路由列表变化，重新过滤路由
+watch(
+    routesList,
+    () => {
       setFilterRoutes();
     },
     {

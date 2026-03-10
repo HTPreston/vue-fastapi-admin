@@ -9,7 +9,7 @@
 					</el-icon>
 					查询
 				</el-button>
-				<el-button size="default" type="success" class="ml10" @click="onOpenAddDept('add')">
+				<el-button size="default" type="success" class="ml10" v-auth="'dept:add'" @click="onOpenAddDept('add')">
 					<el-icon>
 						<ele-FolderAdd />
 					</el-icon>
@@ -40,9 +40,9 @@
 				<el-table-column prop="createTime" label="创建时间" show-overflow-tooltip></el-table-column>
 				<el-table-column label="操作" show-overflow-tooltip width="140">
 					<template #default="scope">
-						<el-button size="small" text type="primary" @click="onOpenAddDept('add')">新增</el-button>
-						<el-button size="small" text type="primary" @click="onOpenEditDept('edit', scope.row)">修改</el-button>
-						<el-button size="small" text type="primary" @click="onTabelRowDel(scope.row)">删除</el-button>
+						<el-button size="small" text type="primary" v-auth="'dept:add'" @click="onOpenAddDept('add')">新增</el-button>
+						<el-button size="small" text type="primary" v-auth="'dept:edit'" @click="onOpenEditDept('edit', scope.row)">修改</el-button>
+						<el-button size="small" text type="primary" v-auth="'dept:delete'" @click="onTabelRowDel(scope.row)">删除</el-button>
 					</template>
 				</el-table-column>
 			</el-table>

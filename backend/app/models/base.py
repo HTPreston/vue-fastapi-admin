@@ -1,6 +1,7 @@
 import time
 import typing
 from math import ceil
+from datetime import datetime
 
 from loguru import logger
 from sqlalchemy import Boolean, DateTime, func, select, update, delete, insert, Select, \
@@ -8,6 +9,7 @@ from sqlalchemy import Boolean, DateTime, func, select, update, delete, insert, 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.declarative import as_declarative
 from sqlalchemy.orm import mapped_column, noload
+from fastapi.encoders import jsonable_encoder
 
 from app.utils.serialize import default_serialize
 from app.db.sqlalchemy import async_transaction
@@ -37,9 +39,7 @@ class Base:
 
     id = mapped_column(BigInteger(), nullable=False, primary_key=True, autoincrement=True, comment='主键')
     creation_date = mapped_column(DateTime(), default=func.now(), comment='创建时间')
-    created_by = mapped_column(BigInteger, comment='创建人ID')
     updation_date = mapped_column(DateTime(), default=func.now(), onupdate=func.now(), comment='更新时间')
-    updated_by = mapped_column(BigInteger, comment='更新人ID')
     enabled_flag = mapped_column(Boolean(), default=1, nullable=False, comment='是否删除, 0 删除 1 非删除')
     trace_id = mapped_column(String(255), comment="trace_id")
 
@@ -71,11 +71,12 @@ class Base:
         return await cls.get_result(stmt)
 
     @classmethod
-    async def create_or_update(cls, params: typing.Union[typing.Dict], to_dict: bool = True) -> typing.Dict[
-        typing.Text, typing.Any]:
+    async def create_or_update(cls, params: typing.Union[typing.Dict], to_dict: bool = True) -> typing.Union[typing.Dict[typing.Text, typing.Any], "Base"]:
         """
+        创建或更新数据
         :param params: 更新数据 dict
-        :return: 更新后的数据 dict
+        :param to_dict: 是否返回字典
+        :return: 更新后的数据 dict 或对象
         """
         if not isinstance(params, dict):
             raise ValueError("更新参数错误！")
@@ -93,9 +94,9 @@ class Base:
     async def create(cls, params: typing.Dict, to_dict: bool = False) -> typing.Union["Base", typing.Dict]:
         """
         插入数据
-        :param params: 批量插入数据
+        :param params: 插入数据
         :param to_dict: 是否转字典
-        :return: 插入数量
+        :return: 插入的对象或字典
         """
         if not isinstance(params, dict):
             raise ValueError("参数错误")
@@ -103,7 +104,7 @@ class Base:
         stmt = insert(cls).values(**params)
         result = await cls.execute(stmt)
         (primary_key,) = result.inserted_primary_key
-        params["id"] = primary_key
+        # 从数据库重新获取数据，确保返回完整信息
         return await cls.get(primary_key, to_dict=to_dict)
 
     @classmethod
@@ -180,13 +181,15 @@ class Base:
         return await session.execute(stmt, params)
 
     @classmethod
-    async def pagination(cls, stmt: Select) -> typing.Dict[str, typing.Any]:
+    async def pagination(cls, stmt: Select, page: int = 1, page_size: int = 10) -> typing.Dict[str, typing.Any]:
         """
         分页查询
         :param stmt: select对象
+        :param page: 页码
+        :param page_size: 每页数量
         :return:
         """
-        return await cls.parse_pagination(stmt)
+        return await cls.parse_pagination(stmt, page, page_size)
 
     @classmethod
     def get_table_columns(cls, exclude: set = None) -> ClauseList:
@@ -248,28 +251,55 @@ class Base:
         :return:
         """
         session: AsyncSession = SQLAlchemySession.get()
-        request = FastApiRequest.get()
-        if request.method == 'POST':
-            request_json = request.scope.get('request_body', {})
-            page = int(request_json.get('page', 1)) if not page else page
-            page_size = min(int(request_json.get('pageSize', 10)), 1000) if not page_size else page_size
-        else:
-            page = request.query_params.get('page', 1) if not page else page
-            page_size = min(request.query_params.get('pageSize', default=10),
-                            1000) if not page_size else page_size
-
-        (total,) = (await session.execute(Base.count_query(query))).scalars()
-        start_time = time.time()
-        result = (await session.execute(Base.paginate_query(query, page=page, page_size=page_size))).fetchall()
-        logger.debug(f"parse_pagination 耗时:{time.time() - start_time}")
-        result = Base.unwrap_scalars(result)
-        total_page = int(ceil(float(total) / page_size))
+        
+        # 优化：直接使用传入的参数，避免从请求中获取
+        if page is None or page_size is None:
+            request = FastApiRequest.get()
+            if request.method == 'POST':
+                request_json = request.scope.get('request_body', {})
+                page = int(request_json.get('page', 1)) if not page else page
+                page_size = min(int(request_json.get('pageSize', 10)), 1000) if not page_size else page_size
+            else:
+                page = request.query_params.get('page', 1) if not page else page
+                page_size = min(request.query_params.get('pageSize', default=10),
+                                1000) if not page_size else page_size
+        
+        # 优化：使用更高效的计数查询
+        count_stmt = Base.count_query(query)
+        total_result = await session.execute(count_stmt)
+        total = total_result.scalar() or 0
+        
+        # 优化：执行分页查询
+        paginated_stmt = Base.paginate_query(query, page=page, page_size=page_size)
+        result = await session.execute(paginated_stmt)
+        rows = result.fetchall()
+        
+        # 优化：使用更高效的序列化方法
+        serialized_rows = []
+        for row in rows:
+            if isinstance(row, Row):
+                # 直接转换Row对象为字典，避免递归序列化
+                row_dict = {}
+                for i, field in enumerate(row._fields):
+                    value = row._data[i]
+                    if isinstance(value, datetime):
+                        row_dict[field] = value.strftime("%Y-%m-%d %H:%M:%S")
+                    elif isinstance(value, (int, float, str, bool, type(None))):
+                        row_dict[field] = value
+                    else:
+                        # 只对复杂类型进行序列化
+                        row_dict[field] = jsonable_encoder(value)
+                serialized_rows.append(row_dict)
+            else:
+                serialized_rows.append(jsonable_encoder(row))
+        
+        total_page = int(ceil(float(total) / page_size)) if page_size > 0 else 0
         pagination = {
             'rowTotal': total,
             'pageSize': page_size,
             'page': page,
             'pageTotal': total_page,
-            'rows': result,
+            'rows': serialized_rows,
         }
 
         return pagination

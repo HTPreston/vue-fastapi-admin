@@ -116,7 +116,9 @@
           <!-- Expand组件代码下方有贴出来 -->
           <Expand :render="col.render"
                   :row="scope.row"
-                  :index="scope.$index"/>
+                  :index="scope.$index"
+                  :lookupCode="col.lookupCode || ''"
+                  :columnKey="col.key || ''"/>
         </template>
       </el-table-column>
       <!-- render函数 (END) -->
@@ -152,119 +154,58 @@
   </div>
 </template>
 <script setup lang="ts" name="z-table">
-import {computed, defineAsyncComponent, reactive} from 'vue'
-import {formatLookup} from '/@/utils/lookup'
+import {computed, defineAsyncComponent, reactive, VNodeChild} from 'vue'
+
+// 定义列配置类型
+interface Column {
+  key: string;
+  label: string;
+  width?: string | number;
+  align?: string;
+  show?: boolean;
+  columnType?: string;
+  sortable?: boolean;
+  fixed?: string;
+  prop?: string;
+  slot?: string;
+  buttons?: Array<{
+    name: string;
+    type: string;
+    command: string;
+  }>;
+  render?: (row: Record<string, any>, index: number) => VNodeChild;
+  dateFormat?: string;
+  lookupCode?: string;
+}
 
 const Expand = defineAsyncComponent(() => import("./expand.vue"))
 
-const props = defineProps({
-  // 列表
-  data: {
-    type: Array,
-    default: () => []
-  },
-  // table的数据
-  columns: {
-    type: Array,
-    default: () => []
-  },
-  // 每列的配置项
-  options: {
-    type: Object,
-    default: () => {
-      return {
-        stripe: false,
-        border: true,
-        tooltipEffect: 'dark',
-        showHeader: true,
-        showPagination: true,
-        // rowStyle: () => 'cursor:pointer' // 行样式
-      }
-    }
-  },
-  rowKey: {
-    type: String,
-    default() {
-      return ""
-    }
-  },
-  border: {
-    type: Boolean,
-    default() {
-      return true
-    }
-  },
-  // treeProps
-  treeProps: {
-    type: Object,
-    default() {
-      return {}
-    }
-  },
-  // 分页
-  showPage: {
-    type: Boolean,
-    default: () => true
-  },
-  // 远程加载
-  lazy: {
-    type: Boolean,
-    default: () => {
-      return false
-    }
-  },
-  // 加载回调函数
-  load: {
-    type: Function,
-    default: () => {
-    }
-  },
-  // 是否显示占位符
-  showPlaceholder: {
-    type: Boolean,
-    default: () => {
-      return false
-    }
-  },
-  placeholder: {
-    type: String,
-    default: () => {
-      return "-"
-    }
-  },
-  // 页数
-  page: {
-    type: Number,
-    default: 0
-  },
-  // 页面大小
-  pageSize: {
-    type: Number,
-    default: 10
-  },
-  // 总数
-  total: {
-    type: Number,
-    default: 0
-  },
-  //
-  pageSizes: {
-    type: Array,
-    default() {
-      return [10, 20, 30, 50, 100, 200]
-    }
-  },
-  layout: {
-    type: String,
-    default: 'total, sizes, prev, pager, next, jumper'
-  },
-  loading: {
-    type: Boolean,
-    default: () => {
-      return false
-    }
-  }
-})
+const props = defineProps<{
+  data: Array<Record<string, any>>;
+  columns: Array<Column>;
+  options?: {
+    stripe?: boolean;
+    border?: boolean;
+    tooltipEffect?: string;
+    showHeader?: boolean;
+    showPagination?: boolean;
+    rowStyle?: () => string;
+  };
+  rowKey?: string;
+  border?: boolean;
+  treeProps?: Record<string, any>;
+  showPage?: boolean;
+  lazy?: boolean;
+  load?: () => void;
+  showPlaceholder?: boolean;
+  placeholder?: string;
+  page?: number;
+  pageSize?: number;
+  total?: number;
+  pageSizes?: number[];
+  layout?: string;
+  loading?: boolean;
+}>()
 
 const state = reactive({
   tableLoading: false,
@@ -291,18 +232,18 @@ const emit = defineEmits([
 // 自定义索引
 const indexMethod = (index: number) => {
   if (!props.showPage) return index + 1
-  return index + (props.page - 1) * props.pageSize + 1
+  return index + ((props.page || 1) - 1) * (props.pageSize || 10) + 1
 }
 // 切换pageSize
 const pageSizeChange = (pageSize: number) => {
   emit('update:pageSize', pageSize)
-  emit('pagination-change', {page: props.page, limit: pageSize})
+  emit('pagination-change', {page: props.page || 1, limit: pageSize})
 }
 // 切换currentPage
 const currentPageChange = (currentPage: number) => {
   emit('current-change', currentPage)
   emit('update:page', currentPage)
-  emit('pagination-change', {page: currentPage, limit: props.pageSize})
+  emit('pagination-change', {page: currentPage, limit: props.pageSize || 10})
 }
 // 按钮组事件
 const handleAction = (command: any, scope: any) => {
@@ -326,11 +267,11 @@ const handleSortChange = ({column, prop, order}: any) => {
   emit('sort-change', {column, prop, order})
 }
 
-const handleRow = (row: any, key: string, lookupCode: string) => {
+const handleRow = (row: any, key: string, lookupCode: string | undefined) => {
   if (props.showPlaceholder && (!row[key] || row[key] === '' || row[key] === null)) {
-    return props.placeholder
+    return props.placeholder || '-'
   } else {
-    return lookupCode ? formatLookup(lookupCode, row[key]) : row[key]
+    return row[key]
   }
 }
 

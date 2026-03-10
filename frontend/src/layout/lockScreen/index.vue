@@ -36,7 +36,7 @@
             <div class="layout-lock-screen-login-box-img">
               <img :src="userInfos.avatar"/>
             </div>
-            <div class="layout-lock-screen-login-box-name">{{ userInfos.nickname }}</div>
+            <div class="layout-lock-screen-login-box-name">{{ userInfos.username }}</div>
             <div class="layout-lock-screen-login-box-value pb24">
               <el-form :model="state">
                 <el-form-item prop="lockScreenPassword"

@@ -8,7 +8,7 @@ import {formatFlatteningRoutes, formatTwoStageRoutes, router} from '/@/router';
 import {useRoutesList} from '/@/stores/routesList';
 import {useTagsViewRoutes} from '/@/stores/tagsViewRoutes';
 import {useUserApi} from '/@/api/useSystemApi/user';
-import {useLookupStore} from "/@/stores/lookup";
+
 import {useMenuInfo} from "/@/stores/menu";
 
 
@@ -35,9 +35,7 @@ export async function initBackEndControlRoutes() {
 	// 无 token 停止执行下一步
 	if (!Session.get('token')) return false;
 	// 触发初始化用户信息 pinia
-	await useUserStore().setUserInfos();
-	// 设置数据字典
-	await useLookupStore().setLookup();
+	await useUserStore().setUserInfos(true); // 强制刷新用户信息
 	// 获取路由菜单数据
 	const menuData = await useMenuInfo().getMenuData();
 	// 无登录权限时，添加判断

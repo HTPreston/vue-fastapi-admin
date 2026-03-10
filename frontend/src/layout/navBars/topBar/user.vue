@@ -77,7 +77,7 @@
                    :src="userInfos.avatar"
                    :size="32"
                    :style="userInfos.avatar ? {'--el-avatar-bg-color': 'transparent'} : {}">
-          {{ userInfos.nickname ? userInfos.nickname.slice(0, 1).toUpperCase() : "" }}
+          {{ userInfos.username ? userInfos.username.slice(0, 1).toUpperCase() : "" }}
         </el-avatar>
       </div>
       <template #dropdown>
@@ -87,11 +87,11 @@
               <el-avatar
                   :src="userInfos.avatar"
                   :style="userInfos.avatar ? {'--el-avatar-bg-color': 'transparent'} : {}">
-                {{ userInfos.nickname ? userInfos.nickname.slice(0, 1).toUpperCase() : "" }}
+                {{ userInfos.username ? userInfos.username.slice(0, 1).toUpperCase() : "" }}
               </el-avatar>
             </div>
             <div class="avatar-box-name">
-              <div class="avatar-box-name-text">{{ userInfos.nickname }}</div>
+              <div class="avatar-box-name-text">{{ userInfos.username }}</div>
               <span class="avatar-box-name-des" :title="userInfos?.remarks">{{ userInfos.remarks }}</span>
             </div>
           </div>
@@ -291,7 +291,7 @@ const onComponentSizeChange = (size: string) => {
 };
 // 初始化组件大小/i18n
 const initI18nOrSize = (value: string, attr: string) => {
-  state[attr] = Local.get('themeConfig')[value];
+  (state as any)[attr] = Local.get('themeConfig')[value];
 };
 
 // 页面加载时
@@ -426,6 +426,7 @@ onMounted(() => {
         line-height: 1.25rem;
         display: -webkit-box;
         -webkit-line-clamp: 1;
+        line-clamp: 1;
         white-space: nowrap; /* 确保文本在一行内显示 */
         overflow: hidden; /* 隐藏溢出容器的文本 */
         text-overflow: ellipsis; /* 超出部分显示为省略号 */
