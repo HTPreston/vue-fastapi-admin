@@ -9,7 +9,7 @@ from app.models.base import Base
 from app.schemas.system.roles import RoleQuery
 from app.schemas.system.user import UserQuery, UserLoginRecordQuery
 
-
+# region 用户表
 class User(Base):
     """用户表"""
     __tablename__ = 'user'
@@ -56,8 +56,9 @@ class User(Base):
     async def get_user_by_phone(cls, phone: str):
         stmt = select(*cls.get_table_columns()).where(cls.phone == phone, cls.enabled_flag == 1)
         return await cls.get_result(stmt, True)
+# endregion 用户表
 
-
+# region 菜单表
 class Menu(Base):
     """菜单表"""
     __tablename__ = 'menu'
@@ -124,8 +125,9 @@ class Menu(Base):
             **{"views": cls.views + 1})
         result = await cls.execute(stmt)
         return result.rowcount
+# endregion 菜单表
 
-
+# region 角色表
 class Roles(Base):
     """角色表"""
     __tablename__ = 'roles'
@@ -194,9 +196,9 @@ class Roles(Base):
             pass
         stmt = select(cls.get_table_columns()).where(*q)
         return await cls.get_result(stmt, True)
+# endregion 角色表
 
-
-# Redis 模块级初始化
+# region Redis 模块级初始化
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -310,8 +312,9 @@ class UserLoginRecord(Base):
             return None
         stmt = select(cls.get_table_columns()).where(cls.enabled_flag == 1, cls.token == token).order_by(cls.id.desc())
         return await cls.get_result(stmt, first=True)
+# endregion
 
-
+# region 文件信息表
 class FileInfo(Base):
     """文件信息"""
     __tablename__ = 'file_info'
@@ -323,8 +326,9 @@ class FileInfo(Base):
     original_name = Column(String(255), nullable=True, comment='原名称')
     content_type = Column(String(255), nullable=True, comment='文件类型')
     file_size = Column(String(255), nullable=True, comment='文件大小')
+# endregion 文件信息表
 
-
+# region 公司信息表
 class CompanyInfo(Base):
     """公司信息"""
     __tablename__ = 'company_info'
@@ -374,8 +378,9 @@ class CompanyInfo(Base):
             q.append(cls.status == params['status'])
 
         return await cls.get_list_by_page(q, params.get('page', 1), params.get('page_size', 10))
+# endregion 公司信息表
 
-
+# region 公司资质证书表
 class CompanyQualificationCertificate(Base):
     """公司资质证书表"""
     __tablename__ = 'company_qualification_certificate'
@@ -417,8 +422,9 @@ class CompanyQualificationCertificate(Base):
             q.append(cls.certificate_name.like(f'%{name}%'))
 
         return await cls.get_list_by_page(q, params.get('page', 1), params.get('page_size', 10))
+# endregion 公司资质证书表
 
-
+# region 人员信息表
 class Personnel(Base):
     """人员信息表"""
     __tablename__ = 'personnel'
@@ -477,8 +483,9 @@ class Personnel(Base):
             q.append(cls.is_full_time == params['is_full_time'])
 
         return await cls.get_list_by_page(q, params.get('page', 1), params.get('page_size', 10))
+# endregion 人员信息表
 
-
+# region 员工资质证书表
 class PersonnelQualificationCertificate(Base):
     """员工资质证书表"""
     __tablename__ = 'personnel_qualification_certificate'
@@ -527,8 +534,9 @@ class PersonnelQualificationCertificate(Base):
             q.append(cls.certificate_no == params['certificate_no'])
 
         return await cls.get_list_by_page(q, params.get('page', 1), params.get('page_size', 10))
+# endregion 员工资质证书表
 
-
+# region 投标信息表
 class BidSubmission(Base):
     """投标信息表"""
     __tablename__ = 'bid_submission'
@@ -576,8 +584,9 @@ class BidSubmission(Base):
             q.append(cls.submission_date == params['submission_date'])
 
         return await cls.get_list_by_page(q, params.get('page', 1), params.get('page_size', 10))
+# endregion 投标信息表
 
-
+# region 投标绑定人员表
 class BidSubmissionPersonnel(Base):
     """投标绑定人员表"""
     __tablename__ = 'bid_submission_personnel'
@@ -616,3 +625,4 @@ class BidSubmissionPersonnel(Base):
             q.append(cls.is_full_time == params['is_full_time'])
 
         return await cls.get_list_by_page(q, params.get('page', 1), params.get('page_size', 10))
+# endregion 投标绑定人员表
