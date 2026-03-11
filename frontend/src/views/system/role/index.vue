@@ -38,7 +38,24 @@ const tableRef = ref();
 const state = reactive({
   columns: [
     {
-      label: '操作', fixed: 'left', width: '', align: 'center',
+      key: 'name', label: '角色名称', width: '140px', align: 'center', show: true,
+      render: (row: any) => h(ElTag, {
+        type: row.role_type == 10 ? "danger" : row.role_type == 20 ? "warning" : "primary",
+        effect: "light"
+      }, () => row.name)
+    },
+    {key: 'role_type', label: '权限类型', width: '', align: 'center', show: true},
+    {
+      key: 'status', label: '角色状态', width: '', align: 'center', show: true,
+      render: (row: any) => h(ElTag, {
+        type: row.status == 1 ? "success" : "info",
+      }, () => row.status == 1 ? "启用" : "禁用",)
+    },
+    {key: 'description', label: '备注', width: '', align: 'center', show: true},
+    {key: 'updation_date', label: '更新时间', width: '', align: 'center', show: true},
+    {key: 'creation_date', label: '创建时间', width: '', align: 'center', show: true},
+    {
+      label: '操作', width: '150px', align: 'center',
       render: (row: any) => {
         const buttons = [];
         // 权限检查：只有拥有对应权限的用户才能操作
@@ -78,23 +95,6 @@ const state = reactive({
         return h("div", { style: { display: 'flex', gap: '8px', justifyContent: 'center' } }, buttons);
       }
     },
-    {
-      key: 'name', label: '角色名称', width: '', align: 'center', show: true,
-      render: (row: any) => h(ElTag, {
-        type: row.role_type == 10 ? "danger" : row.role_type == 20 ? "warning" : "primary",
-        effect: "light"
-      }, () => row.name)
-    },
-    {key: 'role_type', label: '权限类型', width: '', align: 'center', show: true},
-    {
-      key: 'status', label: '角色状态', width: '', align: 'center', show: true,
-      render: (row: any) => h(ElTag, {
-        type: row.status == 1 ? "success" : "info",
-      }, () => row.status == 1 ? "启用" : "禁用",)
-    },
-    {key: 'description', label: '备注', width: '', align: 'center', show: true},
-    {key: 'updation_date', label: '更新时间', width: '', align: 'center', show: true},
-    {key: 'creation_date', label: '创建时间', width: '', align: 'center', show: true},
   ],
   // list
   listData: [],
