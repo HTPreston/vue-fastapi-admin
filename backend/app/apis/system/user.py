@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
-# @author: xiaobai
 from fastapi.requests import Request
 
-from app.corelibs.codes import CodeEnum
 from app.corelibs.custom_router import APIRouter
 from app.schemas.system.user import UserLogin, UserQuery, UserIn, UserResetPwd, UserDel, UserProfileUpdate, UserAvatarUpdate, UserEmailUpdate, UserRegister
 from app.services.system.user import UserService

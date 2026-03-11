@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
-# @author: xiaobai
 import typing
 
 from sqlalchemy import Column, String, Text, Integer, DateTime, select, update, Index, JSON
-from sqlalchemy.orm import aliased
+from sqlalchemy import SmallInteger, Date, TIMESTAMP, Numeric
+
+from datetime import datetime
 
 from app.models.base import Base
 from app.schemas.system.roles import RoleQuery
@@ -315,6 +315,7 @@ class UserLoginRecord(Base):
 class FileInfo(Base):
     """文件信息"""
     __tablename__ = 'file_info'
+
     id = Column(String(60), nullable=False, primary_key=True, autoincrement=False)
     name = Column(String(255), nullable=True, comment='存储的文件名')
     file_path = Column(String(255), nullable=True, comment='文件路径')
@@ -322,3 +323,296 @@ class FileInfo(Base):
     original_name = Column(String(255), nullable=True, comment='原名称')
     content_type = Column(String(255), nullable=True, comment='文件类型')
     file_size = Column(String(255), nullable=True, comment='文件大小')
+
+
+class CompanyInfo(Base):
+    """公司信息"""
+    __tablename__ = 'company_info'
+
+    id = Column(Integer, nullable=False, primary_key=True, autoincrement=True)
+    name = Column(String(200), nullable=False, comment='公司名称')
+    short_name = Column(String(200), nullable=True, comment='公司简称')
+    english_name = Column(String(200), nullable=True, comment='英文名称')
+    credit_code = Column(String(50), nullable=True, comment='统一社会信用代码')
+    legal_representative = Column(String(100), nullable=True, comment='法人代表人')
+    registered_capital = Column(Integer, nullable=True, comment='注册资本')
+    establishment_date = Column(Date, nullable=True, comment='成立日期')
+    business_term = Column(String(100), nullable=True, comment='经营期限')
+    company_type = Column(String(50), nullable=True, comment='企业类型')
+    business_scope = Column(Text, nullable=True, comment='经营范围')
+    registered_address = Column(String(500), nullable=True, comment='注册地址')
+    office_address = Column(String(500), nullable=True, comment='办公地址')
+    postal_code = Column(String(20), nullable=True, comment='邮政编码')
+    contact_phone = Column(String(20), nullable=True, comment='联系电话')
+    fax = Column(String(50), nullable=True, comment='传真号码')
+    website = Column(String(200), nullable=True, comment='公司网址')
+    email = Column(String(100), nullable=True, comment='电子邮箱')
+    personnel_reserve = Column(JSON, nullable=True, comment='人员储备')
+    bank_name = Column(String(100), nullable=True, comment='开户银行')
+    bank_account = Column(String(100), nullable=True, comment='银行账号')
+    business_license_path = Column(String(500), nullable=True, comment='营业执照图片路径')
+    deposit_account_path = Column(String(500), nullable=True, comment='存款账户图片路径')
+    status = Column(SmallInteger, nullable=False, default=1, comment='状态:1-正常,0-停用')
+    created_at = Column(TIMESTAMP, nullable=False, default=datetime.now, comment='创建时间')
+    updated_at = Column(TIMESTAMP, nullable=False, default=datetime.now, onupdate=datetime.now, comment='更新时间')
+
+    @classmethod
+    async def get_list(cls, params: typing.Dict) -> typing.Dict[typing.Text, typing.Any]:
+        """
+        获取公司信息列表
+
+        :param params: 查询参数
+        :type params: typing.Dict
+        :return: 分页数据
+        :rtype: typing.Dict[typing.Text, typing.Any]
+        """
+        q = [cls.enabled_flag == 1]
+        if params.get('name'):
+            name = params['name'].replace('%', '\\%').replace('_', '\\_')
+            q.append(cls.name.like(f'%{name}%'))
+        if params.get('status') is not None:
+            q.append(cls.status == params['status'])
+
+        return await cls.get_list_by_page(q, params.get('page', 1), params.get('page_size', 10))
+
+
+class CompanyQualificationCertificate(Base):
+    """公司资质证书表"""
+    __tablename__ = 'company_qualification_certificate'
+
+    id = Column(Integer, nullable=False, primary_key=True, autoincrement=True, comment='主键ID')
+    company_id = Column(Integer, nullable=False, comment='公司ID')
+    certificate_type = Column(String(50), nullable=False, comment='资质类型')
+    certificate_level = Column(String(500), nullable=True, comment='资质等级')
+    certificate_no = Column(String(100), nullable=True, comment='证书编号')
+    certificate_name = Column(String(200), nullable=True, comment='证书全称')
+    issue_authority = Column(String(200), nullable=True, comment='发证机关')
+    issue_date = Column(Date, nullable=True, comment='发证日期')
+    valid_until = Column(Date, nullable=True, comment='有效期至')
+    certificate_status = Column(SmallInteger, nullable=True, default=1, comment='证书状态:1-有效,0-无效,2-即将到期')
+    certificate_path = Column(String(500), nullable=True, comment='证书图片路径')
+    remark = Column(Text, nullable=True, comment='备注')
+    created_at = Column(TIMESTAMP, nullable=False, default=datetime.now, comment='创建时间')
+    updated_at = Column(TIMESTAMP, nullable=False, default=datetime.now, onupdate=datetime.now, comment='更新时间')
+
+    @classmethod
+    async def get_list(cls, params: typing.Dict) -> typing.Dict[typing.Text, typing.Any]:
+        """
+        获取公司资质证书列表
+
+        :param params: 查询参数
+        :type params: typing.Dict
+        :return: 分页数据
+        :rtype: typing.Dict[typing.Text, typing.Any]
+        """
+        q = [cls.enabled_flag == 1]
+        if params.get('company_id'):
+            q.append(cls.company_id == params['company_id'])
+        if params.get('certificate_type'):
+            q.append(cls.certificate_type == params['certificate_type'])
+        if params.get('certificate_status') is not None:
+            q.append(cls.certificate_status == params['certificate_status'])
+        if params.get('certificate_name'):
+            name = params['certificate_name'].replace('%', '\\%').replace('_', '\\_')
+            q.append(cls.certificate_name.like(f'%{name}%'))
+
+        return await cls.get_list_by_page(q, params.get('page', 1), params.get('page_size', 10))
+
+
+class Personnel(Base):
+    """人员信息表"""
+    __tablename__ = 'personnel'
+
+    id = Column(Integer, nullable=False, primary_key=True, autoincrement=True, comment='主键ID')
+    company_id = Column(Integer, nullable=False, comment='公司ID')
+    name = Column(String(100), nullable=False, comment='姓名')
+    gender = Column(String(10), nullable=True, comment='性别')
+    birth_date = Column(Date, nullable=True, comment='出生日期')
+    id_card_no = Column(String(50), nullable=True, comment='身份证号码', index=True)
+    id_card_path = Column(String(500), nullable=True, comment='身份证号码地址')
+    is_principal = Column(SmallInteger, nullable=True, default=0, comment='是否公司负责人')
+    education = Column(String(50), nullable=True, comment='学历')
+    graduate_school = Column(String(200), nullable=True, comment='毕业院校')
+    major = Column(String(100), nullable=True, comment='专业')
+    educational_certificate_path = Column(String(100), nullable=True, comment='学历证书路径')
+    work_years = Column(Integer, nullable=True, comment='工作年限')
+    phone = Column(String(20), nullable=True, comment='手机号码')
+    email = Column(String(100), nullable=True, comment='电子邮箱')
+    is_full_time = Column(SmallInteger, nullable=True, default=1, comment='是否专职')
+    employment_date = Column(Date, nullable=True, comment='入职日期')
+    work_experience = Column(Text, nullable=True, comment='工作经历')
+    project_experience = Column(Text, nullable=True, comment='项目经验')
+    title = Column(String(50), nullable=True, comment='职称')
+    work_start_date = Column(Date, nullable=True, comment='参加工作时间（匹配简历表“参加工作时间”）')
+    resume_path = Column(String(500), nullable=True, comment='简历路径')
+    labor_contract_path = Column(JSON, nullable=True, comment='劳动合同路径')
+    social_security_path = Column(String(500), nullable=True, comment='社保证明路径')
+    personnel_status = Column(SmallInteger, nullable=True, default=1, comment='人员状态:1-在职,0-离职,2-休假')
+    created_at = Column(TIMESTAMP, nullable=False, default=datetime.now, comment='创建时间')
+    updated_at = Column(TIMESTAMP, nullable=False, default=datetime.now, onupdate=datetime.now, comment='更新时间')
+
+    @classmethod
+    async def get_list(cls, params: typing.Dict) -> typing.Dict[typing.Text, typing.Any]:
+        """
+        获取人员信息列表
+
+        :param params: 查询参数
+        :type params: typing.Dict
+        :return: 分页数据
+        :rtype: typing.Dict[typing.Text, typing.Any]
+        """
+        q = [cls.enabled_flag == 1]
+        if params.get('company_id'):
+            q.append(cls.company_id == params['company_id'])
+        if params.get('name'):
+            name = params['name'].replace('%', '\\%').replace('_', '\\_')
+            q.append(cls.name.like(f'%{name}%'))
+        if params.get('gender'):
+            q.append(cls.gender == params['gender'])
+        if params.get('personnel_status') is not None:
+            q.append(cls.personnel_status == params['personnel_status'])
+        if params.get('is_principal') is not None:
+            q.append(cls.is_principal == params['is_principal'])
+        if params.get('is_full_time') is not None:
+            q.append(cls.is_full_time == params['is_full_time'])
+
+        return await cls.get_list_by_page(q, params.get('page', 1), params.get('page_size', 10))
+
+
+class PersonnelQualificationCertificate(Base):
+    """员工资质证书表"""
+    __tablename__ = 'personnel_qualification_certificate'
+
+    id = Column(Integer, nullable=False, primary_key=True, autoincrement=True, comment='主键ID')
+    personnel_id = Column(Integer, nullable=False, comment='人员ID', index=True)
+    personnel_name = Column(String(20), nullable=False, comment='人员名称', index=True)
+    certificate_type = Column(String(100), nullable=False, comment='证书类型', index=True)
+    certificate_title = Column(String(300), nullable=True, comment='岗位名称')
+    certificate_full_name = Column(String(300), nullable=True, comment='证书全称')
+    certificate_no = Column(String(100), nullable=False, comment='证书编号')
+    certificate_level = Column(String(50), nullable=True, comment='证书等级')
+    certificate_profession = Column(String(100), nullable=True, comment='证书专业')
+    issue_organization = Column(String(200), nullable=True, comment='发证机构')
+    issue_date = Column(Date, nullable=True, comment='发证日期')
+    valid_until = Column(Date, nullable=True, comment='有效期至')
+    certificate_status = Column(String(20), nullable=True, default='有效', comment='证书状态')
+    profession_validity = Column(String(100), nullable=True, comment='专业有效期')
+    training_institution = Column(String(200), nullable=True, comment='培训机构/评审组织')
+    certificate_path = Column(String(500), nullable=True, comment='证书图片路径')
+    remark = Column(Text, nullable=True, comment='备注')
+    created_at = Column(TIMESTAMP, nullable=False, default=datetime.now, comment='创建时间')
+    updated_at = Column(TIMESTAMP, nullable=False, default=datetime.now, onupdate=datetime.now, comment='更新时间')
+
+    @classmethod
+    async def get_list(cls, params: typing.Dict) -> typing.Dict[typing.Text, typing.Any]:
+        """
+        获取员工资质证书列表
+
+        :param params: 查询参数
+        :type params: typing.Dict
+        :return: 分页数据
+        :rtype: typing.Dict[typing.Text, typing.Any]
+        """
+        q = [cls.enabled_flag == 1]
+        if params.get('personnel_id'):
+            q.append(cls.personnel_id == params['personnel_id'])
+        if params.get('personnel_name'):
+            name = params['personnel_name'].replace('%', '\\%').replace('_', '\\_')
+            q.append(cls.personnel_name.like(f'%{name}%'))
+        if params.get('certificate_type'):
+            q.append(cls.certificate_type == params['certificate_type'])
+        if params.get('certificate_status'):
+            q.append(cls.certificate_status == params['certificate_status'])
+        if params.get('certificate_no'):
+            q.append(cls.certificate_no == params['certificate_no'])
+
+        return await cls.get_list_by_page(q, params.get('page', 1), params.get('page_size', 10))
+
+
+class BidSubmission(Base):
+    """投标信息表"""
+    __tablename__ = 'bid_submission'
+
+    id = Column(Integer, nullable=False, primary_key=True, autoincrement=True, comment='主键ID')
+    project_id = Column(Integer, nullable=False, comment='项目ID', index=True)
+    company_id = Column(Integer, nullable=False, comment='投标公司ID', index=True)
+    survey_fee = Column(Numeric(12, 2), nullable=True, comment='勘察费(元/米钻探进尺)')
+    design_fee_rate = Column(Numeric(5, 2), nullable=True, comment='设计费收费比例(%)')
+    engineering_fee_rate = Column(Numeric(5, 2), nullable=True, comment='工程费优惠后的费率(%)')
+    agent_id = Column(Integer, nullable=True, comment='委托人ID')
+    agent_name = Column(String(10), nullable=True, comment='委托人姓名')
+    agent_period = Column(Integer, nullable=True, comment='委托人 期限(天)')
+    construction_qualification_level = Column(String(255), nullable=True, comment='施工资质等级')
+    safety_certificate_no = Column(String(100), nullable=True, comment='安全生产许可证编号')
+    safety_certificate_path = Column(String(100), nullable=True, comment='安全生产许可证路径')
+    bid_bond = Column(Numeric(12, 2), nullable=True, comment='投标保证金(元)')
+    bid_bond_remark = Column(String(200), nullable=True, comment='保证金说明')
+    bid_status = Column(String(20), nullable=True, default='准备中', comment='投标状态', index=True)
+    submission_date = Column(Date, nullable=True, comment='投标日期')
+    bid_open_result = Column(Text, nullable=True, comment='开标结果')
+    bid_document_path = Column(String(500), nullable=True, comment='投标文件路径')
+    bid_sheet_path = Column(String(500), nullable=True, comment='唱标一览表路径')
+    created_at = Column(TIMESTAMP, nullable=False, default=datetime.now, comment='创建时间')
+    updated_at = Column(TIMESTAMP, nullable=False, default=datetime.now, onupdate=datetime.now, comment='更新时间')
+
+    @classmethod
+    async def get_list(cls, params: typing.Dict) -> typing.Dict[typing.Text, typing.Any]:
+        """
+        获取投标信息列表
+
+        :param params: 查询参数
+        :type params: typing.Dict
+        :return: 分页数据
+        :rtype: typing.Dict[typing.Text, typing.Any]
+        """
+        q = [cls.enabled_flag == 1]
+        if params.get('project_id'):
+            q.append(cls.project_id == params['project_id'])
+        if params.get('company_id'):
+            q.append(cls.company_id == params['company_id'])
+        if params.get('bid_status'):
+            q.append(cls.bid_status == params['bid_status'])
+        if params.get('submission_date'):
+            q.append(cls.submission_date == params['submission_date'])
+
+        return await cls.get_list_by_page(q, params.get('page', 1), params.get('page_size', 10))
+
+
+class BidSubmissionPersonnel(Base):
+    """投标绑定人员表"""
+    __tablename__ = 'bid_submission_personnel'
+
+    id = Column(Integer, nullable=False, primary_key=True, autoincrement=True, comment='主键ID')
+    project_id = Column(Integer, nullable=False, comment='项目ID', index=True)
+    bid_submission_id = Column(Integer, nullable=False, comment='投标信息ID（关联具体投标）', index=True)
+    personnel_id = Column(Integer, nullable=False, comment='人员ID', index=True)
+    personnel_name = Column(String(50), nullable=False, comment='人员名称')
+    post = Column(String(50), nullable=False, comment='项目指派岗位（与投标书岗位对应）')
+    certificate_id = Column(Integer, nullable=False, comment='使用证书ID')
+    is_full_time = Column(SmallInteger, nullable=False, default=1, comment='项目维度专职/兼职（投标书要求标注）')
+    created_at = Column(TIMESTAMP, nullable=False, default=datetime.now, comment='创建时间')
+    updated_at = Column(TIMESTAMP, nullable=False, default=datetime.now, onupdate=datetime.now, comment='更新时间')
+
+    @classmethod
+    async def get_list(cls, params: typing.Dict) -> typing.Dict[typing.Text, typing.Any]:
+        """
+        获取投标绑定人员列表
+
+        :param params: 查询参数
+        :type params: typing.Dict
+        :return: 分页数据
+        :rtype: typing.Dict[typing.Text, typing.Any]
+        """
+        q = [cls.enabled_flag == 1]
+        if params.get('project_id'):
+            q.append(cls.project_id == params['project_id'])
+        if params.get('bid_submission_id'):
+            q.append(cls.bid_submission_id == params['bid_submission_id'])
+        if params.get('personnel_id'):
+            q.append(cls.personnel_id == params['personnel_id'])
+        if params.get('post'):
+            q.append(cls.post == params['post'])
+        if params.get('is_full_time') is not None:
+            q.append(cls.is_full_time == params['is_full_time'])
+
+        return await cls.get_list_by_page(q, params.get('page', 1), params.get('page_size', 10))
