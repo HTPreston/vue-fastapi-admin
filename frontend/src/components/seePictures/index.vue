@@ -16,7 +16,7 @@
       </template>
       <div class="cropper-warp">
         <div class="cropper-warp-left">
-          <img :src="state.cropperImg" class="cropper-warp-left-img" id="AvatarRef"/>
+          <img ref="AvatarRef" :src="state.cropperImg" class="cropper-warp-left-img"/>
         </div>
         <div class="cropper-warp-right">
           <div class="cropper-warp-right-title">预览</div>

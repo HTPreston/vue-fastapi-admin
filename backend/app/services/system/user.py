@@ -451,6 +451,8 @@ class UserService:
             "token": current_user_info.get("token"),
             "login_time": current_user_info.get("login_time"),
             "username": result["username"],
+            "phone": result.get("phone", ""),
+            "avatar": result.get("avatar", ""),
             "tags": result["tags"],
             "role_type": result.get("role_type")
         }
