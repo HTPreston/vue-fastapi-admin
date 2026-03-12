@@ -1,11 +1,10 @@
 <template>
   <div class="login-container flex h100" ref="loginContainerRef">
     <div class="login-left">
-      <!--      <h1 class="text-logo">ZERORRUNER</h1>-->
       <span class="text-logo-2">{{ getThemeConfig.globalTitle }}</span>
 
       <div class="login-left-logo">
-        <!--        <div class="login-left-logo-img">-->
+               <!-- <div class="login-left-logo-img"> -->
         <!--        <img class="login-left-logo-img-body" :src="logoMini"/>-->
         <!--        </div>-->
         <!--        <div class="login-left-logo-text">-->
@@ -40,8 +39,7 @@
 
     <div class="login-footer">
       <div class="login-footer__content">
-        <span style="color: #fff">FAST-API-TEMP</span> |
-        <a style="color: #fff" href="https://beian.miit.gov.cn/" class="slide" target="_blank">粤ICP备xxxxx号</a>
+        <!-- <a style="color: #fff" href="https://beian.miit.gov.cn/" class="slide" target="_blank">粤ICP备xxxxx号</a> -->
       </div>
     </div>
   </div>

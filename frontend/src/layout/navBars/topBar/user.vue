@@ -47,25 +47,7 @@
     <!--      ></i>-->
     <!--    </div>-->
 
-    <div class="layout-navbars-breadcrumb-user-icon rounded-full mr10">
-      <el-popover placement="bottom" trigger="click" transition="el-zoom-in-top" :width="300" :persistent="false">
-        <template #reference>
-          <el-button
-              title="消息"
-              size="default"
-              class="layout-navbars-breadcrumb-user-icon rounded-full bell-button"
-              text
-          >
-            <el-badge :is-dot="true">
-              <Bell class="icon-size shake-animation"></Bell>
-            </el-badge>
-          </el-button>
-        </template>
-        <template #default>
-          <UserNews/>
-        </template>
-      </el-popover>
-    </div>
+
 
 
     <el-dropdown :show-timeout="70"
@@ -147,7 +129,6 @@ import { useMenuInfo } from "/@/stores/menu";
 defineOptions({ name: "layoutBreadcrumbUser" })
 
 // 引入组件
-const UserNews = defineAsyncComponent(() => import('/src/layout/navBars/topBar/userNews.vue'));
 const GlobalSearch = defineAsyncComponent(() => import('/src/layout/navBars/global-search/global-search.vue'));
 
 // 定义变量内容
@@ -271,11 +252,11 @@ const onSearchClick = () => {
 
 // git仓库
 const onGithubClick = () => {
-  window.open('https://github.com/baizunxian/zerorunner');
+  window.open('https://github.com/baizunxian/HTHC');
 }
 // doc文档
 const onDocClick = () => {
-  window.open('https://zerorunner.cn/docs');
+  window.open('https://HTHC.cn/docs');
 }
 // 个人中心
 const onUserCenterClick = () => {

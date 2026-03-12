@@ -271,7 +271,6 @@ const state = reactive({
   loginRecordsPage: 1,
   loginRecordsPageSize: 10,
   loading: false,
-  recommendList: [],
   userInfoForm: {
     id: null as number | null,
     username: '',
@@ -574,48 +573,6 @@ onMounted(() => {
         margin-top: 15px;
         display: flex;
         justify-content: flex-end;
-      }
-    }
-  }
-
-  .personal-recommend-row {
-    .personal-recommend-col {
-      .personal-recommend {
-        position: relative;
-        height: 100px;
-        border-radius: 3px;
-        overflow: hidden;
-        cursor: pointer;
-
-        &:hover {
-          i {
-            right: 0px !important;
-            bottom: 0px !important;
-            transition: all ease 0.3s;
-          }
-        }
-
-        i {
-          position: absolute;
-          right: -10px;
-          bottom: -10px;
-          font-size: 70px;
-          transform: rotate(-30deg);
-          transition: all ease 0.3s;
-        }
-
-        .personal-recommend-auto {
-          padding: 15px;
-          position: absolute;
-          left: 0;
-          top: 5%;
-          color: var(--next-color-white);
-
-          .personal-recommend-msg {
-            font-size: 12px;
-            margin-top: 10px;
-          }
-        }
       }
     }
   }
