@@ -25,16 +25,25 @@ export async function initFrontEndControlRoutes() {
 		NextLoading.done();
 		return false;
 	}
-	// 触发初始化用户信息 pinia
-	await useUserStore().setUserInfos();
-	// 无登录权限时，添加判断
-	// if (useUserStore().userInfos.roles.length <= 0) return Promise.resolve(true);
-	// 添加动态路由
-	await setAddRoute();
-	// 设置递归过滤有权限的路由到 pinia routesList 中（已处理成多级嵌套路由）及缓存多级嵌套数组处理后的一维数组
-	await setFilterMenuAndCacheTagsViewRoutes();
-	// 结束 loading 动画
-	NextLoading.done();
+	
+	try {
+		// 触发初始化用户信息 pinia
+		await useUserStore().setUserInfos();
+		// 无登录权限时，添加判断
+		// if (useUserStore().userInfos.roles.length <= 0) return Promise.resolve(true);
+		// 添加动态路由
+		await setAddRoute();
+		// 设置递归过滤有权限的路由到 pinia routesList 中（已处理成多级嵌套路由）及缓存多级嵌套数组处理后的一维数组
+		setFilterMenuAndCacheTagsViewRoutes();
+	} catch (error) {
+		console.error('初始化前端路由失败:', error);
+		// 即使出错也要设置 isGet 为 true，防止无限循环
+		const storesRoutesList = useRoutesList();
+		storesRoutesList.setIsGet(true);
+	} finally {
+		// 结束 loading 动画
+		NextLoading.done();
+	}
 }
 
 /**
@@ -44,7 +53,16 @@ export async function initFrontEndControlRoutes() {
  * @link 参考：https://next.router.vuejs.org/zh/api/#addroute
  */
 export async function setAddRoute() {
-	await setFilterRouteEnd().forEach((route: RouteRecordRaw) => {
+	// 先删除所有动态路由，避免重复添加
+	if (dynamicRoutes[0]?.children) {
+		dynamicRoutes[0].children.forEach((route: RouteRecordRaw) => {
+			const routeName = route.name;
+			if (routeName) router.hasRoute(routeName) && router.removeRoute(routeName);
+		});
+	}
+	
+	// 添加动态路由
+	setFilterRouteEnd().forEach((route: RouteRecordRaw) => {
 		router.addRoute(route);
 	});
 }
@@ -71,7 +89,9 @@ export function setFilterRouteEnd() {
 	let filterRouteEnd: any = formatTwoStageRoutes(formatFlatteningRoutes(dynamicRoutes));
 	// notFoundAndNoPower 防止 404、401 不在 layout 布局中，不设置的话，404、401 界面将全屏显示
 	// 关联问题 No match found for location with path 'xxx'
-	filterRouteEnd[0].children = [...setFilterRoute(filterRouteEnd[0].children), ...notFoundAndNoPower];
+	if (filterRouteEnd[0] && filterRouteEnd[0].children) {
+		filterRouteEnd[0].children = [...setFilterRoute(filterRouteEnd[0].children), ...notFoundAndNoPower];
+	}
 	return filterRouteEnd;
 }
 
@@ -86,15 +106,24 @@ export function setFilterRoute(chil: any) {
 	const stores = useUserStore();
 	const {userInfos} = storeToRefs(stores);
 	let filterRoute: any = [];
-	chil.forEach((route: any) => {
-		if (route.meta.roles) {
-			route.meta.roles.forEach((metaRoles: any) => {
-				userInfos.value.roles.forEach((roles) => {
-					if (metaRoles === roles) filterRoute.push({...route});
-				});
-			});
-		}
-	});
+	// 确保 chil 是数组
+	if (Array.isArray(chil)) {
+		chil.forEach((route: any) => {
+			// 检查路由是否有权限要求
+			if (route.meta?.roles) {
+				// 检查用户是否有对应权限
+				const hasPermission = route.meta.roles.some((metaRoles: any) => 
+					userInfos.value.roles.includes(metaRoles)
+				);
+				if (hasPermission) {
+					filterRoute.push({...route});
+				}
+			} else {
+				// 没有权限要求的路由默认允许访问
+				filterRoute.push({...route});
+			}
+		});
+	}
 	return filterRoute;
 }
 
@@ -109,7 +138,8 @@ export function setCacheTagsViewRoutes() {
 	const {userInfos} = storeToRefs(stores);
 	let rolesRoutes = setFilterHasRolesMenu(dynamicRoutes, userInfos.value.roles);
 	// 添加到 pinia setTagsViewRoutes 中
-	storesTagsView.setTagsViewRoutes(formatTwoStageRoutes(formatFlatteningRoutes(rolesRoutes))[0].children);
+	const formattedRoutes = formatTwoStageRoutes(formatFlatteningRoutes(rolesRoutes));
+	storesTagsView.setTagsViewRoutes(formattedRoutes[0]?.children || []);
 }
 
 /**
@@ -121,7 +151,10 @@ export function setFilterMenuAndCacheTagsViewRoutes() {
 	const stores = useUserStore();
 	const storesRoutesList = useRoutesList();
 	const {userInfos} = storeToRefs(stores);
-	storesRoutesList.setRoutesList(setFilterHasRolesMenu(dynamicRoutes[0].children, userInfos.value.roles));
+	// 确保 dynamicRoutes[0] 和 dynamicRoutes[0].children 存在
+	const childrenRoutes = dynamicRoutes[0]?.children || [];
+	storesRoutesList.setRoutesList(setFilterHasRolesMenu(childrenRoutes, userInfos.value.roles));
+	storesRoutesList.setIsGet(true); // 设置 isGet 为 true，防止重复初始化
 	setCacheTagsViewRoutes();
 }
 
@@ -144,12 +177,15 @@ export function hasRoles(roles: any, route: any) {
  */
 export function setFilterHasRolesMenu(routes: any, roles: any) {
 	const menu: any = [];
-	routes.forEach((route: any) => {
-		const item = {...route};
-		if (hasRoles(roles, item)) {
-			if (item.children) item.children = setFilterHasRolesMenu(item.children, roles);
-			menu.push(item);
-		}
-	});
+	// 确保 routes 是数组
+	if (Array.isArray(routes)) {
+		routes.forEach((route: any) => {
+			const item = {...route};
+			if (hasRoles(roles, item)) {
+				if (item.children) item.children = setFilterHasRolesMenu(item.children, roles);
+				menu.push(item);
+			}
+		});
+	}
 	return menu;
 }

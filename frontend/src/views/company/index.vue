@@ -177,12 +177,15 @@ const pagination = reactive({
 const getCompanyList = async () => {
   loading.value = true;
   try {
-    const params = {
+    const params: any = {
       name: searchForm.name,
-      status: searchForm.status,
       page: pagination.page,
       page_size: pagination.pageSize
     };
+    // 只有当 status 有值时才传递
+    if (searchForm.status !== '') {
+      params.status = parseInt(searchForm.status);
+    }
     const res = await companyApi.getList(params);
     tableData.value = res.data.list;
     pagination.total = res.data.total;
