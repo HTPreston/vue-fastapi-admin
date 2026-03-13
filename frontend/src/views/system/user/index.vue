@@ -39,8 +39,8 @@ interface TableDataRow {
   role_type: number;
   created_by: number;
   updated_by: number;
-  creation_date: string;
-  updation_date: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface listQueryRow {
@@ -83,7 +83,7 @@ const state = reactive<StateRow>({
       }, () => row.status ? "启用" : "禁用",)
     },
     {key: 'remarks', label: '备注', width: '', align: 'center', show: true},
-    {key: 'creation_date', label: '创建时间', width: '', align: 'center', show: true},
+    {key: 'created_at', label: '创建时间', width: '', align: 'center', show: true},
     {
       label: '操作', width: '150px', align: 'center',
       render: (row: any) => {

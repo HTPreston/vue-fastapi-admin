@@ -1,14 +1,11 @@
-import traceback
 import typing
 
-from loguru import logger
-from app.models.system_models import Personnel
+from app.models.system_models import Personnel, PersonnelQualificationCertificate
 from app.schemas.system.personnel import (
     PersonnelIn, PersonnelUpdate, PersonnelDel, PersonnelQuery,
     PersonnelQualificationCertificateIn, PersonnelQualificationCertificateUpdate, 
     PersonnelQualificationCertificateDel, PersonnelQualificationCertificateQuery
 )
-
 
 
 class PersonnelService:
@@ -24,46 +21,38 @@ class PersonnelService:
         :return: 创建的人员信息
         :rtype: typing.Dict[typing.Text, typing.Any]
         """
-        try:
-            data = await Personnel.create(params.dict())
-            return data
-        except Exception as err:
-            logger.error(traceback.format_exc())
-            raise
+        personnel = Personnel(**params.model_dump())
+        await personnel.save()
+        return personnel.to_dict()
 
     @staticmethod
-    async def update(params: PersonnelUpdate) -> typing.Dict[typing.Text, typing.Any]:
+    async def update(params: PersonnelUpdate) -> None:
         """
         更新人员信息
 
         :param params: 人员信息
         :type params: PersonnelUpdate
-        :return: 更新后的人员信息
-        :rtype: typing.Dict[typing.Text, typing.Any]
+        :return: None
         """
-        try:
-            update_data = {k: v for k, v in params.dict().items() if v is not None and k != 'id'}
-            result = await Personnel.update({'id': params.id, **update_data})
-            return result
-        except Exception as err:
-            logger.error(traceback.format_exc())
-            raise
+        personnel = await Personnel.get(params.id)
+        if not personnel:
+            raise ValueError('人员不存在')
+        update_data = params.model_dump(exclude={'id'}, exclude_unset=True)
+        await personnel.update(update_data)
 
     @staticmethod
-    async def delete(params: PersonnelDel) -> int:
+    async def delete(params: PersonnelDel) -> None:
         """
         删除人员信息
 
-        :param params: 人员信息
+        :param params: 人员ID
         :type params: PersonnelDel
-        :return: 影响行数
-        :rtype: int
+        :return: None
         """
-        try:
-            return await Personnel.delete(params.id)
-        except Exception as err:
-            logger.error(traceback.format_exc())
-            raise
+        personnel = await Personnel.get(params.id)
+        if not personnel:
+            raise ValueError('人员不存在')
+        await personnel.delete()
 
     @staticmethod
     async def get_list(params: PersonnelQuery) -> typing.Dict[typing.Text, typing.Any]:
@@ -75,11 +64,7 @@ class PersonnelService:
         :return: 分页数据
         :rtype: typing.Dict[typing.Text, typing.Any]
         """
-        try:
-            return await Personnel.get_list(params.dict())
-        except Exception as err:
-            logger.error(traceback.format_exc())
-            raise
+        return await Personnel.get_list(params.model_dump())
 
     @staticmethod
     async def get_by_id(id: int) -> typing.Dict[typing.Text, typing.Any]:
@@ -91,11 +76,10 @@ class PersonnelService:
         :return: 人员信息
         :rtype: typing.Dict[typing.Text, typing.Any]
         """
-        try:
-            return await Personnel.get(id, to_dict=True)
-        except Exception as err:
-            logger.error(traceback.format_exc())
-            raise
+        personnel = await Personnel.get(id)
+        if not personnel:
+            raise ValueError('人员不存在')
+        return personnel.to_dict()
 
 
 class PersonnelQualificationCertificateService:
@@ -111,46 +95,38 @@ class PersonnelQualificationCertificateService:
         :return: 创建的员工资质证书
         :rtype: typing.Dict[typing.Text, typing.Any]
         """
-        try:
-            data = await PersonnelQualificationCertificate.create(params.dict())
-            return data
-        except Exception as err:
-            logger.error(traceback.format_exc())
-            raise
+        certificate = PersonnelQualificationCertificate(**params.model_dump())
+        await certificate.save()
+        return certificate.to_dict()
 
     @staticmethod
-    async def update(params: PersonnelQualificationCertificateUpdate) -> typing.Dict[typing.Text, typing.Any]:
+    async def update(params: PersonnelQualificationCertificateUpdate) -> None:
         """
         更新员工资质证书
 
         :param params: 员工资质证书信息
         :type params: PersonnelQualificationCertificateUpdate
-        :return: 更新后的员工资质证书
-        :rtype: typing.Dict[typing.Text, typing.Any]
+        :return: None
         """
-        try:
-            update_data = {k: v for k, v in params.dict().items() if v is not None and k != 'id'}
-            result = await PersonnelQualificationCertificate.update({'id': params.id, **update_data})
-            return result
-        except Exception as err:
-            logger.error(traceback.format_exc())
-            raise
+        certificate = await PersonnelQualificationCertificate.get(params.id)
+        if not certificate:
+            raise ValueError('证书不存在')
+        update_data = params.model_dump(exclude={'id'}, exclude_unset=True)
+        await certificate.update(update_data)
 
     @staticmethod
-    async def delete(params: PersonnelQualificationCertificateDel) -> int:
+    async def delete(params: PersonnelQualificationCertificateDel) -> None:
         """
         删除员工资质证书
 
-        :param params: 员工资质证书信息
+        :param params: 员工资质证书ID
         :type params: PersonnelQualificationCertificateDel
-        :return: 影响行数
-        :rtype: int
+        :return: None
         """
-        try:
-            return await PersonnelQualificationCertificate.delete(params.id)
-        except Exception as err:
-            logger.error(traceback.format_exc())
-            raise
+        certificate = await PersonnelQualificationCertificate.get(params.id)
+        if not certificate:
+            raise ValueError('证书不存在')
+        await certificate.delete()
 
     @staticmethod
     async def get_list(params: PersonnelQualificationCertificateQuery) -> typing.Dict[typing.Text, typing.Any]:
@@ -162,11 +138,7 @@ class PersonnelQualificationCertificateService:
         :return: 分页数据
         :rtype: typing.Dict[typing.Text, typing.Any]
         """
-        try:
-            return await PersonnelQualificationCertificate.get_list(params.dict())
-        except Exception as err:
-            logger.error(traceback.format_exc())
-            raise
+        return await PersonnelQualificationCertificate.get_list(params.model_dump())
 
     @staticmethod
     async def get_by_id(id: int) -> typing.Dict[typing.Text, typing.Any]:
@@ -178,8 +150,7 @@ class PersonnelQualificationCertificateService:
         :return: 员工资质证书信息
         :rtype: typing.Dict[typing.Text, typing.Any]
         """
-        try:
-            return await PersonnelQualificationCertificate.get(id, to_dict=True)
-        except Exception as err:
-            logger.error(traceback.format_exc())
-            raise
+        certificate = await PersonnelQualificationCertificate.get(id)
+        if not certificate:
+            raise ValueError('证书不存在')
+        return certificate.to_dict()

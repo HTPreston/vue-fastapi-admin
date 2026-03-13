@@ -12,7 +12,7 @@ import {RouteRecordRaw} from 'vue-router';
  *      isAffix：       是否固定在 tagsView 栏上
  *      isIframe：      是否内嵌窗口，开启条件，`1、isIframe:true 2、isLink：链接地址不为空`
  *      roles：         当前路由权限标识，取角色管理。控制路由显示、隐藏。超级管理员：admin 普通角色：common
- *      icon：          菜单、tagsView 图标，阿里：加 `iconfont xxx`，fontawesome：加 `fa xxx`
+ *      icon：          Element Plus 图标组件名称，如 ele-HomeField
  * }
  */
 // 扩展 RouteMeta 接口
@@ -58,7 +58,52 @@ export const dynamicRoutes: Array<RouteRecordRaw> = [
 					isAffix: true,
 					isIframe: false,
 					roles: ['admin', 'common'],
-					icon: 'iconfont icon-shouye',
+					icon: 'ele-HomeField',
+				},
+			},
+			{
+				path: '/company',
+				name: 'company',
+				component: () => import('/src/views/company/index.vue'),
+				meta: {
+					title: '公司管理',
+					isLink: '',
+					isHide: false,
+					isKeepAlive: true,
+					isAffix: true,
+					isIframe: false,
+					roles: ['admin', 'common'],
+					icon: 'ele-OfficeBuilding',
+				},
+			},
+			{
+				path: '/project',
+				name: 'project',
+				component: () => import('/src/views/project/index.vue'),
+				meta: {
+					title: '项目管理',
+					isLink: '',
+					isHide: false,
+					isKeepAlive: true,
+					isAffix: true,
+					isIframe: false,
+					roles: ['admin', 'common'],
+					icon: 'ele-FolderAdd',
+				},
+			},
+			{
+				path: '/personnel',
+				name: 'personnel',
+				component: () => import('/src/views/personnel/index.vue'),
+				meta: {
+					title: '人员管理',
+					isLink: '',
+					isHide: false,
+					isKeepAlive: true,
+					isAffix: true,
+					isIframe: false,
+					roles: ['admin', 'common'],
+					icon: 'ele-FolderAdd',
 				},
 			},
 			{
@@ -74,7 +119,7 @@ export const dynamicRoutes: Array<RouteRecordRaw> = [
 					isAffix: false,
 					isIframe: false,
 					roles: ['admin'],
-					icon: 'iconfont icon-xitongshezhi',
+					icon: 'ele-Setting',
 				},
 				children: [
 					{
@@ -89,7 +134,7 @@ export const dynamicRoutes: Array<RouteRecordRaw> = [
 							isAffix: false,
 							isIframe: false,
 							roles: ['admin'],
-							icon: 'iconfont icon-caidan',
+							icon: 'ele-Menu',
 						},
 					},
 					{
@@ -104,7 +149,7 @@ export const dynamicRoutes: Array<RouteRecordRaw> = [
 							isAffix: false,
 							isIframe: false,
 							roles: ['admin'],
-							icon: 'ele-ColdDrink',
+							icon: 'ele-UserFilled',
 						},
 					},
 					{
@@ -119,7 +164,7 @@ export const dynamicRoutes: Array<RouteRecordRaw> = [
 							isAffix: false,
 							isIframe: false,
 							roles: ['admin'],
-							icon: 'iconfont icon-icon-',
+							icon: 'ele-User',
 						},
 					},
 					{
@@ -183,6 +228,14 @@ export const notFoundAndNoPower: Array<RouteRecordRaw> = [
  * @returns 返回路由菜单数据
  */
 export const staticRoutes: Array<RouteRecordRaw> = [
+	{
+		path: '/',
+		redirect: '/login',
+		meta: {
+			title: '重定向',
+			isHide: true,
+		},
+	},
 	{
 		path: '/login',
 		name: 'login',

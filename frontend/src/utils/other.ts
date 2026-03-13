@@ -48,8 +48,8 @@ export function monaco(app: App) {
  */
 export function elSvg(app: App) {
   const icons = svg as any;
-  for (const i in icons) {
-    app.component(`ele-${icons[i].name}`, icons[i]);
+  for (const [key, component] of Object.entries(icons)) {
+    app.component(`ele-${key}`, component as any);
   }
   app.component('SvgIcon', SvgIcon);
 }

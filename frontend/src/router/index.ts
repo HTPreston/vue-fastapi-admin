@@ -34,7 +34,7 @@ export const router = createRouter({
 	 * 2、backEnd.ts(后端控制路由)、frontEnd.ts(前端控制路由) 中也需要加 notFoundAndNoPower 404、401 界面。
 	 *    防止 404、401 不在 layout 布局中，不设置的话，404、401 界面将全屏显示
 	 */
-	routes: [...notFoundAndNoPower, ...staticRoutes],
+	routes: [...staticRoutes, ...notFoundAndNoPower],
 });
 
 /**
@@ -43,7 +43,7 @@ export const router = createRouter({
  * @returns 返回处理后的一维路由菜单数组
  */
 export function formatFlatteningRoutes(arr: any) {
-	if (arr.length <= 0) return false;
+	if (!arr || !Array.isArray(arr) || arr.length <= 0) return [];
 	for (let i = 0; i < arr.length; i++) {
 		if (arr[i].children) {
 			arr = arr.slice(0, i + 1).concat(arr[i].children, arr.slice(i + 1));
@@ -60,7 +60,7 @@ export function formatFlatteningRoutes(arr: any) {
  * @returns 返回将一维数组重新处理成 `定义动态路由（dynamicRoutes）` 的格式
  */
 export function formatTwoStageRoutes(arr: any) {
-	if (arr.length <= 0) return false;
+	if (!arr || !Array.isArray(arr) || arr.length <= 0) return [];
 	const newArr: any = [];
 	const cacheList: Array<string> = [];
 	arr.forEach((v: any) => {
@@ -79,13 +79,15 @@ export function formatTwoStageRoutes(arr: any) {
 				v.meta['isDynamic'] = true;
 				v.meta['isDynamicPath'] = v.path;
 			}
-			newArr[0].children.push({...v});
-			// 存 name 值，keep-alive 中 include 使用，实现路由的缓存
-			// 路径：/@/layout/routerView/parent.vue
-			if (newArr[0].meta.isKeepAlive && v.meta.isKeepAlive) {
-				cacheList.push(v.name);
-				const stores = useKeepALiveNames();
-				stores.setCacheKeepAlive(cacheList);
+			if (newArr.length > 0) {
+				newArr[0].children.push({...v});
+				// 存 name 值，keep-alive 中 include 使用，实现路由的缓存
+				// 路径：/@/layout/routerView/parent.vue
+				if (newArr[0].meta.isKeepAlive && v.meta.isKeepAlive) {
+					cacheList.push(v.name);
+					const stores = useKeepALiveNames();
+					stores.setCacheKeepAlive(cacheList);
+				}
 			}
 		}
 	});
@@ -94,12 +96,6 @@ export function formatTwoStageRoutes(arr: any) {
 
 // 路由加载前
 router.beforeEach(async (to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
-
-// 读取 `/src/stores/themeConfig.ts` 是否开启后端控制路由配置
-const storesThemeConfig = useThemeConfig();
-const {themeConfig} = storeToRefs(storesThemeConfig);
-const {isRequestRoutes} = themeConfig.value;
-
 	NProgress.configure({showSpinner: false});
 	if (to.meta.title) NProgress.start();
 	const token = Session.get('token');
@@ -116,6 +112,11 @@ const {isRequestRoutes} = themeConfig.value;
 			next('/home');
 			NProgress.done();
 		} else {
+			// 读取 `/src/stores/themeConfig.ts` 是否开启后端控制路由配置
+			const storesThemeConfig = useThemeConfig();
+			const {themeConfig} = storeToRefs(storesThemeConfig);
+			const {isRequestRoutes} = themeConfig.value;
+			
 			// 确保用户信息已加载
 			const userStore = useUserStore();
 			
@@ -126,10 +127,16 @@ const {isRequestRoutes} = themeConfig.value;
 			
 			const storesRoutesList = useRoutesList();
 			const {routesList, isGet} = storeToRefs(storesRoutesList);
+			
+			// 添加调试日志
+			console.log('[router.beforeEach] routesList.length:', routesList.value.length, 'isGet:', isGet.value, 'path:', to.path);
+			
 			if (routesList.value.length === 0 && !isGet.value) {
 				if (isRequestRoutes) {
 					// 后端控制路由：路由数据初始化，防止刷新时丢失
+					console.log('[router.beforeEach] 开始初始化后端路由');
 					await initBackEndControlRoutes();
+					console.log('[router.beforeEach] 后端路由初始化完成');
 					// 解决刷新时，一直跳 404 页面问题，关联问题 No match found for location with path 'xxx'
 					// to.query 防止页面刷新时，普通路由带参数时，参数丢失。动态路由（xxx/:id/:name"）isDynamic 无需处理
 					next({path: to.path, query: to.query});

@@ -52,8 +52,8 @@ const state = reactive({
       }, () => row.status == 1 ? "启用" : "禁用",)
     },
     {key: 'description', label: '备注', width: '', align: 'center', show: true},
-    {key: 'updation_date', label: '更新时间', width: '', align: 'center', show: true},
-    {key: 'creation_date', label: '创建时间', width: '', align: 'center', show: true},
+    {key: 'updated_at', label: '更新时间', width: '', align: 'center', show: true},
+    {key: 'created_at', label: '创建时间', width: '', align: 'center', show: true},
     {
       label: '操作', width: '150px', align: 'center',
       render: (row: any) => {

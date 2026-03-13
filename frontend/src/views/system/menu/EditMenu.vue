@@ -52,7 +52,7 @@
             </el-col>
             <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
               <el-form-item label="菜单图标">
-                <IconSelector placeholder="请输入菜单图标" v-model="state.form.icon" type="all"/>
+                <IconSelector placeholder="请选择菜单图标" disabled v-model="state.form.icon" type="all"/>
               </el-form-item>
             </el-col>
             <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
@@ -62,7 +62,7 @@
             </el-col>
             <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
               <el-form-item label="链接地址">
-                <el-input v-model="state.form.isLink" placeholder="外链/内嵌时链接地址（http:xxx.com）" clearable
+                <el-input v-model="state.form.linkUrl" placeholder="外链/内嵌时链接地址（http:xxx.com）" clearable
                           :disabled="!state.form.isLink">
                 </el-input>
               </el-form-item>
@@ -76,13 +76,7 @@
             <!--              </el-form-item>-->
             <!--            </el-col>-->
           </template>
-          <template v-if="state.form.menu_type === 20">
-            <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
-              <el-form-item label="权限标识">
-                <el-input v-model="state.form.btnPower" placeholder="请输入权限标识，如：user:add" clearable></el-input>
-              </el-form-item>
-            </el-col>
-          </template>
+
           <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
             <el-form-item label="菜单排序">
               <el-input-number v-model="state.form.sort" controls-position="right" placeholder="请输入排序" class="w100"/>
@@ -147,6 +141,9 @@ import {onMounted, reactive} from 'vue';
 import IconSelector from '/@/components/iconSelector/index.vue';
 import {useMenuApi} from "/@/api/useSystemApi/menu";
 import {ElMessage} from "element-plus";
+import {Session} from '/@/utils/storage';
+import {useMenuInfo} from '/@/stores/menu';
+import {initBackEndControlRoutes} from '/@/router/backEnd';
 
 const emit = defineEmits(['getList'])
 const props = defineProps<{
@@ -159,24 +156,23 @@ const props = defineProps<{
 
 const createMenuForm = () => {
   return {
-    id: null, // 上级菜单
+    id: null as number | null, // 主键ID
     parent_id: 0, // 上级菜单
     menu_type: 10, // 菜单类型  10 菜单  20 按钮
-    name: '', // 路由名称
-    meta: {},
+    name: '', // 菜单名称
     component: '', // 组件路径
     sort: 0, // 菜单排序
-    path: '', // 路由路径
-    redirect: '', // 路由重定向，有子集 children 时
-    title: '', // 菜单名称
-    icon: '', // 菜单图标
+    path: '', // 菜单路径
+    redirect: '', // 重定向
+    title: '', // title
+    icon: '', // 图标
     isHide: 0, // 是否隐藏
     isKeepAlive: 1, // 是否缓存
     isAffix: 0, // 是否固定
-    isLink: 0, // 外链/内嵌时链接地址（http:xxx.com），开启外链条件，`1、isLink:true 2、链接地址不为空`
-    isIframe: 1, // 是否内嵌，开启条件，`1、isIframe:true 2、链接地址不为空`
-    roles: '', // 权限标识，取角色管理
-    btnPower: '', // 菜单类型为按钮时，权限标识
+    isLink: 0, // 是否外链
+    linkUrl: '', // 外链/内嵌时链接地址（http:xxx.com），开启外链条件，`1、isLink:true 2、链接地址不为空`
+    isIframe: 0, // 是否内嵌，开启条件，`1、isIframe:true 2、链接地址不为空`
+    active_menu: '' // 显示页签
   }
 }
 
@@ -201,9 +197,65 @@ const state = reactive({
 const openDialog = (editType: string, row: any) => {
   state.editType = editType
   if (row) {
-    state.form = JSON.parse(JSON.stringify(row));
+    // 深拷贝行数据
+    const copiedRow = JSON.parse(JSON.stringify(row));
+    // 确保id是数字类型
+    const id = copiedRow.id !== undefined && copiedRow.id !== null ? Number(copiedRow.id) || null : null;
+    // 确保parent_id是数字类型
+    const parent_id = copiedRow.parent_id !== undefined && copiedRow.parent_id !== null ? Number(copiedRow.parent_id) || 0 : 0;
+    // 确保isLink是数字类型
+    const isLink = copiedRow.isLink !== undefined && copiedRow.isLink !== null ? Number(copiedRow.isLink) || 0 : 0;
+    // 确保isIframe是数字类型
+    const isIframe = copiedRow.isIframe !== undefined && copiedRow.isIframe !== null ? Number(copiedRow.isIframe) || 0 : 0;
+    // 确保menu_type是数字类型
+    const menu_type = copiedRow.menu_type !== undefined && copiedRow.menu_type !== null ? Number(copiedRow.menu_type) || 10 : 10;
+    // 确保isHide是数字类型
+    const isHide = copiedRow.isHide !== undefined && copiedRow.isHide !== null ? Number(copiedRow.isHide) || 0 : 0;
+    // 确保isKeepAlive是数字类型
+    const isKeepAlive = copiedRow.isKeepAlive !== undefined && copiedRow.isKeepAlive !== null ? Number(copiedRow.isKeepAlive) || 0 : 1;
+    // 确保isAffix是数字类型
+    const isAffix = copiedRow.isAffix !== undefined && copiedRow.isAffix !== null ? Number(copiedRow.isAffix) || 0 : 0;
+    // 确保sort是数字类型
+    const sort = copiedRow.sort !== undefined && copiedRow.sort !== null ? Number(copiedRow.sort) || 0 : 0;
+    // 初始化linkUrl字段
+    const linkUrl = copiedRow.linkUrl || '';
+    // 初始化active_menu字段
+    const active_menu = copiedRow.active_menu || '';
+    // 确保component字段不为null或undefined
+    const component = copiedRow.component || '';
+    // 确保name字段不为null或undefined
+    const name = copiedRow.name || '';
+    // 确保path字段不为null或undefined
+    const path = copiedRow.path || '';
+    // 确保title字段不为null或undefined
+    const title = copiedRow.title || '';
+    // 确保icon字段不为null或undefined
+    const icon = copiedRow.icon || '';
+    // 确保redirect字段不为null或undefined
+    const redirect = copiedRow.redirect || '';
+    
+    // 逐个更新form对象的属性，而不是直接替换整个对象
+    state.form.id = id;
+    state.form.parent_id = parent_id;
+    state.form.isLink = isLink;
+    state.form.isIframe = isIframe;
+    state.form.menu_type = menu_type;
+    state.form.isHide = isHide;
+    state.form.isKeepAlive = isKeepAlive;
+    state.form.isAffix = isAffix;
+    state.form.sort = sort;
+    state.form.linkUrl = linkUrl;
+    state.form.active_menu = active_menu;
+    state.form.component = component;
+    state.form.name = name;
+    state.form.path = path;
+    state.form.title = title;
+    state.form.icon = icon;
+    state.form.redirect = redirect;
   } else {
-    state.form = createMenuForm()
+    // 重置表单
+    const newForm = createMenuForm();
+    Object.assign(state.form, newForm);
   }
   state.isShowDialog = true;
 };
@@ -222,14 +274,27 @@ const onCancel = () => {
 };
 // 新增
 const saveOrUpdate = () => {
-  useMenuApi().saveOrUpdate(state.form)
+  // 准备提交的数据
+  const submitData = {
+    ...state.form
+  };
+
+  
+  useMenuApi().saveOrUpdate(submitData)
       .then(() => {
         ElMessage.success('操作成功');
-        emit('getList')
-        closeDialog(); // 关闭弹窗
+        // 清除菜单缓存
+        Session.remove('menuData');
+        // 重新获取菜单数据
+        useMenuInfo().getMenuData().then(() => {
+          // 刷新当前页面
+          window.location.reload();
+        });
       })
-  console.log(state.form, 'state.menuForm')
-  // setBackEndControlRefreshRoutes() // 刷新菜单，未进行后端接口测试
+      .catch((error) => {
+        ElMessage.error('操作失败：' + (error.message || '未知错误'));
+      });
+  console.log(submitData, 'state.menuForm');
 };
 // 页面加载时
 onMounted(() => {

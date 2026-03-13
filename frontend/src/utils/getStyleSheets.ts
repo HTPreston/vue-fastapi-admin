@@ -33,11 +33,45 @@ const getElementPlusIconfont = () => {
 	return new Promise((resolve, reject) => {
 		nextTick(() => {
 			const icons = svg as any;
-			const sheetsIconList = [];
+			const sheetsIconList: string[] = [];
+			const iconCategories: {
+				directional: string[];
+				notification: string[];
+				operation: string[];
+				device: string[];
+				other: string[];
+			} = {
+				directional: [], // 方向性图标
+				notification: [], // 提示性图标
+				operation: [], // 操作类图标
+				device: [], // 设备类图标
+				other: [] // 其他图标
+			};
+			
+			// 分类图标
 			for (const i in icons) {
-				sheetsIconList.push(`ele-${icons[i].name}`);
+				const iconName = icons[i].name;
+				const iconFullName = `ele-${iconName}`;
+				sheetsIconList.push(iconFullName);
+				
+				// 根据图标名称分类
+				if (iconName.includes('Arrow') || iconName.includes('Direction') || iconName.includes('Up') || iconName.includes('Down') || iconName.includes('Left') || iconName.includes('Right')) {
+					iconCategories.directional.push(iconFullName);
+				} else if (iconName.includes('Info') || iconName.includes('Warning') || iconName.includes('Success') || iconName.includes('Error') || iconName.includes('Alert') || iconName.includes('Notice')) {
+					iconCategories.notification.push(iconFullName);
+				} else if (iconName.includes('Add') || iconName.includes('Delete') || iconName.includes('Edit') || iconName.includes('Search') || iconName.includes('Check') || iconName.includes('Close') || iconName.includes('Save') || iconName.includes('Cancel')) {
+					iconCategories.operation.push(iconFullName);
+				} else if (iconName.includes('Monitor') || iconName.includes('Phone') || iconName.includes('Camera') || iconName.includes('Computer') || iconName.includes('Device')) {
+					iconCategories.device.push(iconFullName);
+				} else {
+					iconCategories.other.push(iconFullName);
+				}
 			}
-			if (sheetsIconList.length > 0) resolve(sheetsIconList);
+			
+			if (sheetsIconList.length > 0) resolve({ 
+				all: sheetsIconList, 
+				categories: iconCategories 
+			});
 			else reject('未获取到值，请刷新重试');
 		});
 	});

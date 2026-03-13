@@ -57,9 +57,6 @@
 		"last 2 versions",
 		"not dead"
 	],
-	"bugs": {
-		"url": "https://github.com/baizunxian/zerorunner/issues"
-	},
 	"engines": {
 		"node": ">=16.0.0",
 		"npm": ">= 7.0.0"
@@ -73,9 +70,5 @@
 		"element-plus",
 		"vue-next-admin",
 		"next-admin"
-	],
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/baizunxian/zerorunner.git"
-	}
+	]
 }

@@ -48,7 +48,6 @@ interface MenuItem {
   title: string;
   path: string;
   component: string;
-  btnPower: string;
   name: string;
   sort: number;
   menu_type: number;
@@ -70,7 +69,6 @@ const state = reactive({
     },
     {key: 'path', label: '路由路径', width: '', align: 'left', show: true},
     {key: 'component', label: '组件路径', width: '', align: 'left', show: true},
-    {key: 'btnPower', label: '权限标识', width: '', align: 'left', show: true},
     {key: 'name', label: '路由名称', width: '', align: 'left', show: true},
     {key: 'sort', label: '排序', width: '', align: 'left', show: true},
     {key: 'menu_type', label: '类型', width: '', align: 'left', show: true, render: (row: MenuItem) => row.menu_type === 10 ? '菜单' : '按钮'}, {

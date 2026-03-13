@@ -44,7 +44,7 @@ export const Session = {
 	get(key: string) {
 		if (key === 'token') return Cookies.get(key);
 		let json = <string>window.sessionStorage.getItem(key);
-		return JSON.parse(json);
+		return json ? JSON.parse(json) : null;
 	},
 	// 移除临时缓存
 	remove(key: string) {

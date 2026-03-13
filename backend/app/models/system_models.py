@@ -18,11 +18,13 @@ class User(Base):
     phone = Column(String(11), nullable=False, comment='手机号', index=True)
     password = Column(Text, nullable=False, comment='密码')
     email = Column(String(64), nullable=True, comment='邮箱')
+    enabled_flag = Column(Integer, nullable=True, default=1, comment='是否删除, 0 删除 1 非删除')
     status = Column(Integer, nullable=False, comment='用户状态  1 锁定， 0 正常', default=0)
     role_type = Column(Integer, nullable=False, comment='用户类型 10 超级管理员, 20 管理员, 30 普通用户', default=30)
     remarks = Column(String(255), nullable=True, comment='用户描述', default='')
     avatar = Column(Text, nullable=True, comment='头像', default='')
     tags = Column(JSON, nullable=True, comment='标签', default=list)
+    trace_id = Column(String(255), nullable=True, comment='trace_id')
 
     @classmethod
     async def get_list(cls, params: UserQuery):
@@ -63,25 +65,27 @@ class Menu(Base):
     """菜单表"""
     __tablename__ = 'menu'
 
-    path = Column(String(255), nullable=False, comment='菜单路径')
-    name = Column(String(255), nullable=False, comment='菜单名称', index=True)
-    component = Column(Integer, nullable=True, comment='组件路径')
-    title = Column(String(255), nullable=True, comment='title', index=True)
-    isLink = Column(Integer, nullable=True,
-                    comment='开启外链条件，`1、isLink: true 2、链接地址不为空（meta.isLink） 3、isIframe: false`')
-    isHide = Column(Integer, nullable=True, default=False, comment='菜单是否隐藏（菜单不显示在界面，但可以进行跳转）')
-    isKeepAlive = Column(Integer, nullable=True, default=True, comment='菜单是否缓存')
-    isAffix = Column(Integer, nullable=True, default=False, comment='固定标签')
-    isIframe = Column(Integer, nullable=True, default=False, comment='是否内嵌')
-    roles = Column(String(64), nullable=True, default=False, comment='权限')
-    icon = Column(String(64), nullable=True, comment='icon', index=True)
-    parent_id = Column(Integer, nullable=True, comment='父级菜单id')
-    redirect = Column(String(255), nullable=True, comment='重定向路由')
+    id = Column(Integer, nullable=False, primary_key=True, autoincrement=True, comment='主键ID')
+    parent_id = Column(Integer, nullable=True, comment='父级id')
+    path = Column(String(255), nullable=False, primary_key=True, comment='菜单路径')
+    name = Column(String(255), nullable=True, comment='菜单名称')
+    component = Column(String(255), nullable=True, comment='组件路径')
+    title = Column(String(255), nullable=True, comment='title')
+    isLink = Column(Integer, nullable=True, default=0, comment='开启外链条件，`1、isLink: true 2、链接地址不为空（meta.isLink） 3、isIframe: false`')
+    isHide = Column(Integer, nullable=True, default=0, comment='菜单是否隐藏（菜单不显示在界面，但可以进行跳转）')
+    icon = Column(String(255), nullable=True, comment='图标')
+    isKeepAlive = Column(Integer, nullable=True, comment='菜单是否缓存')
+    isAffix = Column(Integer, nullable=True, comment='固定标签')
+    isIframe = Column(Integer, nullable=True, comment='是否内嵌')
     sort = Column(Integer, nullable=True, comment='排序')
-    menu_type = Column(Integer, nullable=True, comment='菜单类型')
-    lookup_id = Column(Integer, nullable=True, comment='数据字典')
     active_menu = Column(String(255), nullable=True, comment='显示页签')
-    views = Column(Integer, default=0, nullable=True, comment='访问数')
+    menu_type = Column(Integer, nullable=True, default=10, comment='菜单类型')
+    redirect = Column(String(255), nullable=True, comment='重定向')
+    created_at = Column(DateTime, nullable=True, comment='创建时间')
+    updated_at = Column(DateTime, nullable=True, comment='更新时间')
+    enabled_flag = Column(Integer, nullable=True, default=1, comment='启用标志')
+    views = Column(Integer, nullable=True, default=0, comment='访问数')
+    trace_id = Column(String(255), nullable=True, comment='trace_id')
 
     @classmethod
     async def get_menu_by_ids(cls, ids: typing.List[int]):
@@ -138,6 +142,8 @@ class Roles(Base):
     buttons = Column(Text, nullable=True, comment='按钮权限列表')
     description = Column(String(255), nullable=True, comment='描述')
     status = Column(Integer, nullable=True, comment='状态 1 启用 0 禁用', default=1)
+    enabled_flag = Column(Integer, nullable=True, default=1, comment='是否删除, 0 删除 1 非删除')
+    trace_id = Column(String(255), nullable=True, comment='请求追踪标识符')
 
     @classmethod
     async def get_list(cls, params: RoleQuery):
@@ -230,6 +236,8 @@ class UserLoginRecord(Base):
     login_ip = Column(String(30), index=True, comment='登录IP')
     ret_msg = Column(String(255), comment='返回信息')
     ret_code = Column(String(9), index=True, comment='是否登陆成功  返回状态码  0成功')
+    enabled_flag = Column(Integer, nullable=True, default=1, comment='是否删除, 0 删除 1 非删除')
+    trace_id = Column(String(255), nullable=True, comment='trace_id')
 
     @classmethod
     async def get_list(cls, params: UserLoginRecordQuery):
@@ -331,7 +339,7 @@ class FileInfo(Base):
 # region 公司信息表
 class CompanyInfo(Base):
     """公司信息"""
-    __tablename__ = 'company_info'
+    __tablename__ = 'company'
 
     id = Column(Integer, nullable=False, primary_key=True, autoincrement=True)
     name = Column(String(200), nullable=False, comment='公司名称')
@@ -370,7 +378,7 @@ class CompanyInfo(Base):
         :return: 分页数据
         :rtype: typing.Dict[typing.Text, typing.Any]
         """
-        q = [cls.enabled_flag == 1]
+        q = []
         if params.get('name'):
             name = params['name'].replace('%', '\\%').replace('_', '\\_')
             q.append(cls.name.like(f'%{name}%'))
@@ -410,7 +418,7 @@ class CompanyQualificationCertificate(Base):
         :return: 分页数据
         :rtype: typing.Dict[typing.Text, typing.Any]
         """
-        q = [cls.enabled_flag == 1]
+        q = []
         if params.get('company_id'):
             q.append(cls.company_id == params['company_id'])
         if params.get('certificate_type'):
@@ -467,7 +475,7 @@ class Personnel(Base):
         :return: 分页数据
         :rtype: typing.Dict[typing.Text, typing.Any]
         """
-        q = [cls.enabled_flag == 1]
+        q = []
         if params.get('company_id'):
             q.append(cls.company_id == params['company_id'])
         if params.get('name'):
@@ -520,7 +528,7 @@ class PersonnelQualificationCertificate(Base):
         :return: 分页数据
         :rtype: typing.Dict[typing.Text, typing.Any]
         """
-        q = [cls.enabled_flag == 1]
+        q = []
         if params.get('personnel_id'):
             q.append(cls.personnel_id == params['personnel_id'])
         if params.get('personnel_name'):
@@ -573,7 +581,7 @@ class BidSubmission(Base):
         :return: 分页数据
         :rtype: typing.Dict[typing.Text, typing.Any]
         """
-        q = [cls.enabled_flag == 1]
+        q = []
         if params.get('project_id'):
             q.append(cls.project_id == params['project_id'])
         if params.get('company_id'):
@@ -612,7 +620,7 @@ class BidSubmissionPersonnel(Base):
         :return: 分页数据
         :rtype: typing.Dict[typing.Text, typing.Any]
         """
-        q = [cls.enabled_flag == 1]
+        q = []
         if params.get('project_id'):
             q.append(cls.project_id == params['project_id'])
         if params.get('bid_submission_id'):
@@ -626,3 +634,49 @@ class BidSubmissionPersonnel(Base):
 
         return await cls.get_list_by_page(q, params.get('page', 1), params.get('page_size', 10))
 # endregion 投标绑定人员表
+
+# region 项目表
+class Project(Base):
+    """项目基本信息表"""
+    __tablename__ = 'project'
+
+    id = Column(Integer, nullable=False, primary_key=True, autoincrement=True, comment='主键ID')
+    name = Column(String(500), nullable=False, comment='项目名称', index=True)
+    project_code = Column(String(100), nullable=True, comment='项目编号')
+    project_type = Column(String(100), nullable=True, comment='项目类型')
+    project_location = Column(String(500), nullable=True, comment='项目地点')
+    tender_organization = Column(String(200), nullable=True, comment='招标单位')
+    tender_agent = Column(String(200), nullable=True, comment='招标代理机构')
+    tender_number = Column(String(100), nullable=True, comment='招标编号', index=True)
+    tender_date = Column(Date, nullable=True, comment='招标日期')
+    bid_open_date = Column(Date, nullable=True, comment='开标日期', index=True)
+    project_status = Column(String(20), nullable=True, default='投标中', comment='项目状态')
+    project_cost = Column(Numeric(10, 2), nullable=True, comment='项目预计费用')
+    created_at = Column(TIMESTAMP, nullable=False, default=datetime.now, comment='创建时间')
+    updated_at = Column(TIMESTAMP, nullable=False, default=datetime.now, onupdate=datetime.now, comment='更新时间')
+
+    @classmethod
+    async def get_list(cls, params: typing.Dict) -> typing.Dict[typing.Text, typing.Any]:
+        """
+        获取项目列表
+
+        :param params: 查询参数
+        :type params: typing.Dict
+        :return: 分页数据
+        :rtype: typing.Dict[typing.Text, typing.Any]
+        """
+        q = []
+        if params.get('name'):
+            name = params['name'].replace('%', '\%').replace('_', '\_')
+            q.append(cls.name.like(f'%{name}%'))
+        if params.get('project_code'):
+            q.append(cls.project_code == params['project_code'])
+        if params.get('project_type'):
+            q.append(cls.project_type == params['project_type'])
+        if params.get('project_status'):
+            q.append(cls.project_status == params['project_status'])
+        if params.get('tender_number'):
+            q.append(cls.tender_number == params['tender_number'])
+
+        return await cls.get_list_by_page(q, params.get('page', 1), params.get('page_size', 10))
+# endregion 项目表

@@ -21,10 +21,6 @@ T = typing.TypeVar("T", Select, "Query[Any]")
 @as_declarative()
 class Base:
     """ 基本表 """
-    # db.scalar(sql) 返回的是标量(原始数据) <models.department.Department object at 0x000002F2C2D22110>
-    # db.execute(sql) 返回的是元组 (<models.department.Department object at 0x000002F2C2D22110>)
-    # db.scalars(sql).all()  [<models...>, <models...>, <models...>]
-    # db.execute(sql).fetchall()  [(<models...>,), (<models...>,), (<models...>,)]
     __abstract__ = True
 
     __name__: str  # 表名
@@ -32,16 +28,9 @@ class Base:
 
     __mapper_args__ = {"eager_defaults": True}  # 防止 insert 插入后不刷新
 
-    # @declared_attr
-    # def __tablename__(cls) -> str:
-    #     """将类名小写并转化为表名 __tablename__"""
-    #     return cls.__name__.lower()
-
     id = mapped_column(BigInteger(), nullable=False, primary_key=True, autoincrement=True, comment='主键')
-    creation_date = mapped_column(DateTime(), default=func.now(), comment='创建时间')
-    updation_date = mapped_column(DateTime(), default=func.now(), onupdate=func.now(), comment='更新时间')
-    enabled_flag = mapped_column(Boolean(), default=1, nullable=False, comment='是否删除, 0 删除 1 非删除')
-    trace_id = mapped_column(String(255), comment="trace_id")
+    created_at = mapped_column(DateTime(), default=func.now(), comment='创建时间')
+    updated_at = mapped_column(DateTime(), default=func.now(), onupdate=func.now(), comment='更新时间')
 
     @classmethod
     async def get(cls, id: typing.Union[int, str], to_dict: object = False) -> typing.Union["Base", typing.Dict, None]:
@@ -53,7 +42,7 @@ class Base:
         if not id:
             return None
         q = []
-        if hasattr(cls, "enabled_flag"):
+        if hasattr(cls, 'enabled_flag'):
             q.append(cls.enabled_flag == 1)
         sql = select(cls).where(cls.id == id, *q)
         result = (await cls.execute(sql)).scalar()
@@ -65,7 +54,7 @@ class Base:
         :return: 返回所有数据  list[dict]
         """
         q = []
-        if hasattr(cls, "enabled_flag"):
+        if hasattr(cls, 'enabled_flag'):
             q.append(cls.enabled_flag == 1)
         stmt = select(cls.get_table_columns()).where(*q)
         return await cls.get_result(stmt)
@@ -104,7 +93,6 @@ class Base:
         stmt = insert(cls).values(**params)
         result = await cls.execute(stmt)
         (primary_key,) = result.inserted_primary_key
-        # 从数据库重新获取数据，确保返回完整信息
         return await cls.get(primary_key, to_dict=to_dict)
 
     @classmethod
@@ -160,7 +148,7 @@ class Base:
         if not id:
             return 0
 
-        if _hard is False and hasattr(cls, "enabled_flag"):
+        if _hard is False and hasattr(cls, 'enabled_flag'):
             stmt = update(cls).where(cls.id == id, cls.enabled_flag == 1).values(enabled_flag=0)
         else:
             stmt = delete(cls).where(cls.id == id)
@@ -169,8 +157,7 @@ class Base:
 
     @classmethod
     @async_transaction
-    async def execute(cls, stmt: Executable, params: typing.Any = None) -> Result[
-        typing.Any]:
+    async def execute(cls, stmt: Executable, params: typing.Any = None) -> Result[typing.Any]:
         """
         执行sql
         :param stmt: sqlalchemy Executable 对象
@@ -190,6 +177,18 @@ class Base:
         :return:
         """
         return await cls.parse_pagination(stmt, page, page_size)
+
+    @classmethod
+    async def get_list_by_page(cls, conditions: typing.List, page: int = 1, page_size: int = 10) -> typing.Dict[str, typing.Any]:
+        """
+        根据条件获取分页数据
+        :param conditions: 查询条件列表
+        :param page: 页码
+        :param page_size: 每页数量
+        :return: 分页数据
+        """
+        stmt = select(*cls.get_table_columns()).where(*conditions).order_by(cls.id.desc())
+        return await cls.pagination(stmt, page, page_size)
 
     @classmethod
     def get_table_columns(cls, exclude: set = None) -> ClauseList:
@@ -232,9 +231,6 @@ class Base:
         start_time = time.time()
         data = result.first() if first else result.all()
         logger.debug(f"get_result 耗时:{time.time() - start_time}")
-        # 直接使用pydantic的模型验证
-        # fields = {key: (type(default_serialize(value)), default_serialize(value)) for key, value in data.items()}
-        # return pydantic.create_model("__Row__", **fields).model_validate(data)
         return cls.unwrap_scalars(data) if data else None
 
     @staticmethod
@@ -252,7 +248,6 @@ class Base:
         """
         session: AsyncSession = SQLAlchemySession.get()
         
-        # 优化：直接使用传入的参数，避免从请求中获取
         if page is None or page_size is None:
             request = FastApiRequest.get()
             if request.method == 'POST':
@@ -264,21 +259,17 @@ class Base:
                 page_size = min(request.query_params.get('pageSize', default=10),
                                 1000) if not page_size else page_size
         
-        # 优化：使用更高效的计数查询
         count_stmt = Base.count_query(query)
         total_result = await session.execute(count_stmt)
         total = total_result.scalar() or 0
         
-        # 优化：执行分页查询
         paginated_stmt = Base.paginate_query(query, page=page, page_size=page_size)
         result = await session.execute(paginated_stmt)
         rows = result.fetchall()
         
-        # 优化：使用更高效的序列化方法
         serialized_rows = []
         for row in rows:
             if isinstance(row, Row):
-                # 直接转换Row对象为字典，避免递归序列化
                 row_dict = {}
                 for i, field in enumerate(row._fields):
                     value = row._data[i]
@@ -287,7 +278,6 @@ class Base:
                     elif isinstance(value, (int, float, str, bool, type(None))):
                         row_dict[field] = value
                     else:
-                        # 只对复杂类型进行序列化
                         row_dict[field] = jsonable_encoder(value)
                 serialized_rows.append(row_dict)
             else:
@@ -333,6 +323,13 @@ class Base:
         except TypeError:
             return None
 
+    def to_dict(self) -> typing.Dict[str, typing.Any]:
+        """
+        将模型对象转换为字典
+        :return: 字典格式的模型数据
+        """
+        return default_serialize(self)
+
     @staticmethod
     def unwrap_scalars(items: typing.Union[typing.Sequence[Row], Row]) -> typing.Union[
         typing.List[typing.Dict[typing.Text, typing.Any]], typing.Dict[str, typing.Any]]:
@@ -341,6 +338,4 @@ class Base:
         :param items: 数据返回数据 [Row(...)]
         :return:
         """
-        # if isinstance(items, typing.Iterable) and not isinstance(items, Row):
-        #     return [default_serialize(item) for item in items]
         return default_serialize(items)

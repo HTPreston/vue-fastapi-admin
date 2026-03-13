@@ -26,7 +26,8 @@ export const useMenuInfo = defineStore('useMenuInfo', {
 				data = Session.get('menuData');
 			} else {
 				let res = await useUserApi().getMenuByToken()
-				this.menuData = data = res.data
+				data = res.data
+				this.menuData = data
 
 				Session.set("menuData", this.menuData)
 			}
@@ -37,6 +38,11 @@ export const useMenuInfo = defineStore('useMenuInfo', {
 			if (Session.get('menuData')) {
 				return Session.get('menuData');
 			}
+		},
+
+		clearMenuCache() {
+			Session.remove('menuData');
+			this.menuData = [];
 		},
 	},
 });

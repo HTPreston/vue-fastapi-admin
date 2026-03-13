@@ -38,14 +38,31 @@ export async function initBackEndControlRoutes() {
 	await useUserStore().setUserInfos(true); // 强制刷新用户信息
 	// 获取路由菜单数据
 	const menuData = await useMenuInfo().getMenuData();
-	// 无登录权限时，添加判断
-	// if (res.data.length <= 0) return Promise.resolve(true);
+	console.log('[initBackEndControlRoutes] 菜单数据:', menuData);
+	
+	// 检查菜单数据中是否有重复的路由
+	if (menuData && Array.isArray(menuData)) {
+		const menuPaths = new Set();
+		const checkDuplicate = (routes: any[]) => {
+			routes.forEach(route => {
+				if (menuPaths.has(route.path)) {
+					console.warn('[initBackEndControlRoutes] 发现重复路由:', route.path);
+				}
+				menuPaths.add(route.path);
+				if (route.children) {
+					checkDuplicate(route.children);
+				}
+			});
+		};
+		checkDuplicate(menuData);
+	}
+	
 	// 存储接口原始路由（未处理component），根据需求选择使用
 	await useRequestOldRoutes().setRequestOldRoutes(JSON.parse(JSON.stringify(menuData)));
 	// 处理路由（component），替换 dynamicRoutes（/@/router/route）第一个顶级 children 的路由
-	dynamicRoutes[0].children = await backEndComponent(menuData);
+	dynamicRoutes[0].children = backEndComponent(menuData);
 	// 添加动态路由
-	await setAddRoute();
+	setAddRoute();
 	// 设置路由到 pinia routesList 中（已处理成多级嵌套路由）及缓存多级嵌套数组处理后的一维数组
 	await setFilterMenuAndCacheTagsViewRoutes();
 
@@ -58,9 +75,12 @@ export async function initBackEndControlRoutes() {
  */
 export async function setFilterMenuAndCacheTagsViewRoutes() {
 	const storesRoutesList = useRoutesList();
-	await storesRoutesList.setRoutesList(dynamicRoutes[0].children as any);
+	const children = dynamicRoutes[0]?.children || [];
+	console.log('[setFilterMenuAndCacheTagsViewRoutes] 设置路由列表，数量:', children.length);
+	await storesRoutesList.setRoutesList(children as any);
 	await storesRoutesList.setIsGet(true);
 	setCacheTagsViewRoutes();
+	console.log('[setFilterMenuAndCacheTagsViewRoutes] 路由列表设置完成');
 }
 
 /**
@@ -69,7 +89,10 @@ export async function setFilterMenuAndCacheTagsViewRoutes() {
  */
 export function setCacheTagsViewRoutes() {
 	const storesTagsView = useTagsViewRoutes();
-	storesTagsView.setTagsViewRoutes(formatTwoStageRoutes(formatFlatteningRoutes(dynamicRoutes))[0].children);
+	const tagsViewRoutes = formatTwoStageRoutes(formatFlatteningRoutes(dynamicRoutes));
+	if (tagsViewRoutes && tagsViewRoutes[0] && tagsViewRoutes[0].children) {
+		storesTagsView.setTagsViewRoutes(tagsViewRoutes[0].children);
+	}
 }
 
 /**
@@ -81,8 +104,33 @@ export function setFilterRouteEnd() {
 	let filterRouteEnd = formatTwoStageRoutes(formatFlatteningRoutes(dynamicRoutes));
 	// notFoundAndNoPower 防止 404、401 不在 layout 布局中，不设置的话，404、401 界面将全屏显示
 	// 关联问题 No match found for location with path 'xxx'
-	filterRouteEnd[0].children = [...filterRouteEnd[0].children, ...notFoundAndNoPower];
+	// 使用深拷贝避免修改原始数组
+	if (filterRouteEnd && filterRouteEnd[0] && filterRouteEnd[0].children) {
+		filterRouteEnd[0].children = [...filterRouteEnd[0].children, ...notFoundAndNoPower];
+	}
 	return filterRouteEnd;
+}
+
+/**
+ * 删除/重置路由
+ * @method router.removeRoute
+ * @description 此处循环为 dynamicRoutes（/@/router/route）第一个顶级 children 的路由一维数组，非多级嵌套
+ * @link 参考：https://next.router.vuejs.org/zh/api/#push
+ */
+export function backEndsResetRoute() {
+	console.log('[backEndsResetRoute] 开始重置路由');
+	// 只删除 dynamicRoutes 中的路由，不删除 notFoundAndNoPower 中的路由
+	const filterRouteEnd = formatTwoStageRoutes(formatFlatteningRoutes(dynamicRoutes));
+	if (filterRouteEnd && filterRouteEnd[0] && filterRouteEnd[0].children) {
+		filterRouteEnd[0].children.forEach((route: any) => {
+			const routeName = route.name;
+			if (routeName && router.hasRoute(routeName)) {
+				console.log('[backEndsResetRoute] 删除路由:', routeName);
+				router.removeRoute(routeName);
+			}
+		});
+	}
+	console.log('[backEndsResetRoute] 路由重置完成');
 }
 
 /**
@@ -91,10 +139,20 @@ export function setFilterRouteEnd() {
  * @description 此处循环为 dynamicRoutes（/@/router/route）第一个顶级 children 的路由一维数组，非多级嵌套
  * @link 参考：https://next.router.vuejs.org/zh/api/#addroute
  */
-export async function setAddRoute() {
-	await setFilterRouteEnd().forEach((route: RouteRecordRaw) => {
-		router.addRoute(route);
-	});
+export function setAddRoute() {
+	// 先删除已有的路由，避免重复添加
+	backEndsResetRoute();
+	const routes = setFilterRouteEnd();
+	if (routes && Array.isArray(routes)) {
+		console.log('[setAddRoute] 准备添加路由数量:', routes.length);
+		routes.forEach((route: RouteRecordRaw) => {
+			console.log('[setAddRoute] 添加路由:', route.name, route.path);
+			router.addRoute(route);
+		});
+		console.log('[setAddRoute] 路由添加完成');
+	} else {
+		console.log('[setAddRoute] 没有路由需要添加');
+	}
 }
 
 /**
@@ -122,10 +180,28 @@ export async function setBackEndControlRefreshRoutes() {
  * @returns 返回处理成函数后的 component
  */
 export function backEndComponent(routes: any) {
-	if (!routes) return;
+	if (!routes || !Array.isArray(routes)) return [];
 	return routes.map((item: any) => {
+		// 修复路由 component 路径：如果 component 是 layout/routerView/parent 但路径对应 views 目录下的页面
+		if (item.component === 'layout/routerView/parent' && item.path) {
+			// 提取路径中的名称（如 /personnel -> personnel）
+			const pathName = item.path.replace(/^\//, '').split('/')[0];
+			// 检查是否存在对应的 views 目录下的组件
+			const possibleComponent = `${pathName}/index`;
+			const keys = Object.keys(dynamicViewsModules);
+			const matchKeys = keys.filter((key) => {
+				const k = key.replace(/\.\.\/views|\.\./, '');
+				return k.startsWith(`/${possibleComponent}`) || k.startsWith(`${possibleComponent}`);
+			});
+			if (matchKeys.length === 1) {
+				item.component = possibleComponent;
+				console.log('[backEndComponent] 修复路由 component:', item.path, '->', item.component);
+			}
+		}
 		if (item.component) item.component = dynamicImport(dynamicViewsModules, item.component);
-		item.children && backEndComponent(item.children);
+		if (item.children && Array.isArray(item.children)) {
+			item.children = backEndComponent(item.children);
+		}
 		return item;
 	});
 }

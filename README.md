@@ -30,16 +30,16 @@ backend/.env # 环境文件中的地址修改
 # 安装依赖
 pip install -r  requirements
 
-# 运行项目 zerorunner/backend 目录下执行
+# 运行项目 HTHC/backend 目录下执行
 python main.py
 
 # 异步任务依赖 celery 启动命令
 
-#  windows 启动，只能单线程 zerorunner/backend 目录下执行
+#  windows 启动，只能单线程 HTHC/backend 目录下执行
 celery -A celery_worker.worker.celery worker --pool=solo -l INFO 
 
 # linux 启动
-elery -A celery_worker.worker.celery worker --loglevel=INFO -c 10 -P solo -n zerorunner-celery-worker
+elery -A celery_worker.worker.celery worker --loglevel=INFO -c 10 -P solo -n HTHC-celery-worker
 
 # 定时任务启动
 celery -A celery_worker.worker.celery beat -S celery_worker.scheduler.schedulers:DatabaseScheduler -l INFO
