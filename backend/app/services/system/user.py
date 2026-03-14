@@ -179,7 +179,7 @@ class UserService:
         :return:
         """
         data = await User.get_list(params)
-        for row in data.get("rows"):
+        for row in data.get("list", []):
             tags = row.get("tags", None)
             row["tags"] = tags if tags else []
         return data

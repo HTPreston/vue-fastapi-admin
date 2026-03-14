@@ -46,22 +46,22 @@
       
       <div class="personnel-table">
         <el-table :data="tableData" style="width: 100%" v-loading="loading">
-          <el-table-column prop="id" label="ID" width="80" />
-          <el-table-column prop="name" label="姓名" width="100" />
-          <el-table-column prop="gender" label="性别" width="80" />
-          <el-table-column prop="phone" label="手机号码" width="120" />
-          <el-table-column prop="email" label="电子邮箱" width="180" />
-          <el-table-column prop="education" label="学历" width="100" />
-          <el-table-column prop="title" label="职称" width="100" />
-          <el-table-column prop="work_years" label="工作年限" width="100" />
-          <el-table-column prop="is_full_time" label="是否专职" width="100">
+          <el-table-column prop="id" label="ID" />
+          <el-table-column prop="name" label="姓名" />
+          <el-table-column prop="gender" label="性别" />
+          <el-table-column prop="phone" label="手机号码" />
+          <el-table-column prop="email" label="电子邮箱" />
+          <el-table-column prop="education" label="学历" />
+          <el-table-column prop="title" label="职称" />
+          <el-table-column prop="work_years" label="工作年限" />
+          <el-table-column prop="is_full_time" label="是否专职">
             <template #default="scope">
               <el-tag :type="scope.row.is_full_time === 1 ? 'success' : 'info'">
                 {{ scope.row.is_full_time === 1 ? '是' : '否' }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="personnel_status" label="人员状态" width="100">
+          <el-table-column prop="personnel_status" label="人员状态">
             <template #default="scope">
               <el-tag 
                 :type="scope.row.personnel_status === 1 ? 'success' : scope.row.personnel_status === 0 ? 'danger' : 'warning'"
@@ -70,13 +70,13 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="employment_date" label="入职日期" width="120" />
-          <el-table-column label="操作" width="200" fixed="right">
+          <el-table-column prop="employment_date" label="入职日期" />
+          <el-table-column label="操作" fixed="right" width="240">
             <template #default="scope">
-              <el-button type="primary" size="small" @click="handleEdit(scope.row)">
+              <el-button type="primary" size="small" @click="handleEdit(scope.row)" style="margin-right: 8px">
                 编辑
               </el-button>
-              <el-button type="success" size="small" @click="handleQualification(scope.row)">
+              <el-button type="success" size="small" @click="handleQualification(scope.row)" style="margin-right: 8px">
                 资质证书
               </el-button>
               <el-button type="danger" size="small" @click="handleDelete(scope.row.id)">
@@ -104,7 +104,7 @@
     <el-dialog
       v-model="dialogVisible"
       :title="dialogType === 'add' ? '新增人员' : '编辑人员'"
-      width="900px"
+      width="80%"
     >
       <el-form :model="form" :rules="rules" ref="formRef" size="default" label-width="120px">
         <el-row :gutter="20">

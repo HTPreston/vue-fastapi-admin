@@ -126,8 +126,8 @@ const getList = () => {
   tableRef.value.openLoading()
   useUserApi().getList(state.listQuery)
     .then(res => {
-      state.listData = res.data.rows
-      state.total = res.data.rowTotal
+      state.listData = res.data.list
+      state.total = res.data.total
     })
     .finally(() => {
       tableRef.value.closeLoading()

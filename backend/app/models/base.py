@@ -285,11 +285,11 @@ class Base:
         
         total_page = int(ceil(float(total) / page_size)) if page_size > 0 else 0
         pagination = {
-            'rowTotal': total,
+            'total': total,
             'pageSize': page_size,
             'page': page,
             'pageTotal': total_page,
-            'rows': serialized_rows,
+            'list': serialized_rows,
         }
 
         return pagination

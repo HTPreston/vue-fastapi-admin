@@ -14,7 +14,7 @@ class RolesService:
     @staticmethod
     async def list(params: RoleQuery) -> typing.Dict[str, typing.Any]:
         data = await Roles.get_list(params)
-        for row in data.get("rows", []):
+        for row in data.get("list", []):
             row["menus"] = list(map(int, (row["menus"].split(",")))) if row["menus"] else []
             row["buttons"] = row["buttons"].split(",") if row["buttons"] else []
         return data

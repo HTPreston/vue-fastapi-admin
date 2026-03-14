@@ -431,8 +431,8 @@ const getLoginRecords = async () => {
       pageSize: state.loginRecordsPageSize
     })
     if (data) {
-      state.loginRecords = data.rows || []
-      state.loginRecordsTotal = data.rowTotal || 0
+      state.loginRecords = data.list || []
+      state.loginRecordsTotal = data.total || 0
     }
   } catch (error) {
     console.error('获取登录记录失败:', error)
