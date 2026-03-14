@@ -44,229 +44,66 @@
         </el-form>
       </div>
       
-      <div class="personnel-table">
-        <el-table :data="tableData" style="width: 100%" v-loading="loading">
-          <el-table-column prop="id" label="ID" />
-          <el-table-column prop="name" label="姓名" />
-          <el-table-column prop="gender" label="性别" />
-          <el-table-column prop="phone" label="手机号码" />
-          <el-table-column prop="email" label="电子邮箱" />
-          <el-table-column prop="education" label="学历" />
-          <el-table-column prop="title" label="职称" />
-          <el-table-column prop="work_years" label="工作年限" />
-          <el-table-column prop="is_full_time" label="是否专职">
-            <template #default="scope">
-              <el-tag :type="scope.row.is_full_time === 1 ? 'success' : 'info'">
-                {{ scope.row.is_full_time === 1 ? '是' : '否' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="personnel_status" label="人员状态">
-            <template #default="scope">
-              <el-tag 
-                :type="scope.row.personnel_status === 1 ? 'success' : scope.row.personnel_status === 0 ? 'danger' : 'warning'"
-              >
-                {{ scope.row.personnel_status === 1 ? '在职' : scope.row.personnel_status === 0 ? '离职' : '休假' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="employment_date" label="入职日期" />
-          <el-table-column label="操作" fixed="right" width="240">
-            <template #default="scope">
-              <el-button type="primary" size="small" @click="handleEdit(scope.row)" style="margin-right: 8px">
-                编辑
-              </el-button>
-              <el-button type="success" size="small" @click="handleQualification(scope.row)" style="margin-right: 8px">
-                资质证书
-              </el-button>
-              <el-button type="danger" size="small" @click="handleDelete(scope.row.id)">
-                删除
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-        
-        <div class="pagination-container" style="margin-top: 20px;">
-          <el-pagination
-            v-model:current-page="pagination.page"
-            v-model:page-size="pagination.pageSize"
-            :page-sizes="[10, 20, 50, 100]"
-            layout="total, sizes, prev, pager, next, jumper"
-            :total="pagination.total"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-          />
+      <div class="personnel-cards" v-loading="loading">
+        <div class="personnel-card" v-for="item in tableData" :key="item.id" @click="handleDetail(item)">
+          <div class="card-header">
+            <h3 class="name">{{ item.name }}</h3>
+            <el-tag 
+              :type="item.personnel_status === 1 ? 'success' : item.personnel_status === 0 ? 'danger' : 'warning'"
+            >
+              {{ item.personnel_status === 1 ? '在职' : item.personnel_status === 0 ? '离职' : '休假' }}
+            </el-tag>
+          </div>
+          <div class="card-body">
+            <div class="info-item">
+              <span class="label">职称：</span>
+              <span class="value">{{ item.title || '无' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">工作年限：</span>
+              <span class="value">{{ item.work_years }}年</span>
+            </div>
+            <div class="info-item">
+              <span class="label">性别：</span>
+              <span class="value">{{ item.gender }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">手机号码：</span>
+              <span class="value">{{ item.phone }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">入职日期：</span>
+              <span class="value">{{ item.employment_date }}</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <el-button type="primary" size="small" @click.stop="handleEdit(item)" style="margin-right: 8px">
+              编辑
+            </el-button>
+            <el-button type="success" size="small" @click.stop="handleQualification(item)" style="margin-right: 8px">
+              资质证书
+            </el-button>
+            <el-button type="danger" size="small" @click.stop="handleDelete(item.id)">
+              删除
+            </el-button>
+          </div>
         </div>
+      </div>
+      
+      <div class="pagination-container" style="margin-top: 20px;">
+        <el-pagination
+          v-model:current-page="pagination.page"
+          v-model:page-size="pagination.pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="pagination.total"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
       </div>
     </z-card>
     
-    <!-- 新增/编辑对话框 -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="dialogType === 'add' ? '新增人员' : '编辑人员'"
-      width="80%"
-    >
-      <el-form :model="form" :rules="rules" ref="formRef" size="default" label-width="120px">
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="姓名" prop="name">
-              <el-input v-model="form.name" placeholder="请输入姓名" clearable></el-input>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="性别" prop="gender">
-              <el-select v-model="form.gender" placeholder="请选择性别" clearable style="width: 100%">
-                <el-option label="男" value="男" />
-                <el-option label="女" value="女" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="出生日期" prop="birth_date">
-              <el-date-picker
-                v-model="form.birth_date"
-                type="date"
-                placeholder="请选择出生日期"
-                value-format="YYYY-MM-DD"
-                style="width: 100%"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="身份证号码" prop="id_card_no">
-              <el-input v-model="form.id_card_no" placeholder="请输入身份证号码" clearable></el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="手机号码" prop="phone">
-              <el-input v-model="form.phone" placeholder="请输入手机号码" clearable></el-input>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="电子邮箱" prop="email">
-              <el-input v-model="form.email" placeholder="请输入电子邮箱" clearable></el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="学历" prop="education">
-              <el-input v-model="form.education" placeholder="请输入学历" clearable></el-input>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="毕业院校" prop="graduate_school">
-              <el-input v-model="form.graduate_school" placeholder="请输入毕业院校" clearable></el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="专业" prop="major">
-              <el-input v-model="form.major" placeholder="请输入专业" clearable></el-input>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="职称" prop="title">
-              <el-input v-model="form.title" placeholder="请输入职称" clearable></el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="工作年限" prop="work_years">
-              <el-input-number v-model="form.work_years" :min="0" placeholder="请输入工作年限" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="参加工作时间" prop="work_start_date">
-              <el-date-picker
-                v-model="form.work_start_date"
-                type="date"
-                placeholder="请选择参加工作时间"
-                value-format="YYYY-MM-DD"
-                style="width: 100%"
-              />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="入职日期" prop="employment_date">
-              <el-date-picker
-                v-model="form.employment_date"
-                type="date"
-                placeholder="请选择入职日期"
-                value-format="YYYY-MM-DD"
-                style="width: 100%"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="人员状态" prop="personnel_status">
-              <el-select v-model="form.personnel_status" placeholder="请选择人员状态" clearable style="width: 100%">
-                <el-option label="在职" :value="1" />
-                <el-option label="离职" :value="0" />
-                <el-option label="休假" :value="2" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="是否专职" prop="is_full_time">
-              <el-select v-model="form.is_full_time" placeholder="请选择" clearable style="width: 100%">
-                <el-option label="是" :value="1" />
-                <el-option label="否" :value="0" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="是否公司负责人" prop="is_principal">
-              <el-select v-model="form.is_principal" placeholder="请选择" clearable style="width: 100%">
-                <el-option label="是" :value="1" />
-                <el-option label="否" :value="0" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        
-        <el-form-item label="工作经历" prop="work_experience">
-          <el-input
-            v-model="form.work_experience"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入工作经历"
-          />
-        </el-form-item>
-        
-        <el-form-item label="项目经验" prop="project_experience">
-          <el-input
-            v-model="form.project_experience"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入项目经验"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">确定</el-button>
-        </span>
-      </template>
-    </el-dialog>
+
     
     <!-- 资质证书对话框 -->
     <QualificationDialog ref="qualificationDialogRef" />
@@ -277,15 +114,14 @@
 import {ref, reactive, onMounted} from 'vue';
 import {ElMessage, ElMessageBox} from 'element-plus';
 import {usePersonnelApi} from '../../api/useSystemApi/personnel';
+import {useRouter} from 'vue-router';
 import QualificationDialog from './QualificationDialog.vue';
 
 // 定义变量
 const loading = ref(false);
-const dialogVisible = ref(false);
-const dialogType = ref('add');
-const formRef = ref();
 const qualificationDialogRef = ref();
 const personnelApi = usePersonnelApi();
+const router = useRouter();
 
 // 搜索表单
 const searchForm = reactive({
@@ -295,37 +131,25 @@ const searchForm = reactive({
   is_full_time: null as number | null
 });
 
-// 表单数据
-const form = reactive({
-  id: null as number | null,
-  name: '',
-  gender: '',
-  birth_date: '',
-  id_card_no: '',
-  phone: '',
-  email: '',
-  education: '',
-  graduate_school: '',
-  major: '',
-  title: '',
-  work_years: 0,
-  work_start_date: '',
-  employment_date: '',
-  personnel_status: 1,
-  is_full_time: 1,
-  is_principal: 0,
-  work_experience: '',
-  project_experience: ''
-});
-
-// 表单验证规则
-const rules = reactive({
-  name: [{required: true, message: '请输入姓名', trigger: 'blur'}],
-  phone: [{required: true, message: '请输入手机号码', trigger: 'blur'}]
-});
+// 人员数据类型定义
+interface PersonnelItem {
+  id: number;
+  name: string;
+  gender: string;
+  phone: string;
+  email: string;
+  education: string;
+  title: string;
+  work_years: number;
+  is_full_time: number;
+  personnel_status: number;
+  employment_date: string;
+  work_experience?: string;
+  project_experience?: string;
+}
 
 // 表格数据
-const tableData = ref([]);
+const tableData = ref<PersonnelItem[]>([]);
 
 // 分页数据
 const pagination = reactive({
@@ -375,61 +199,26 @@ const resetForm = () => {
 
 // 新增
 const handleAdd = () => {
-  dialogType.value = 'add';
-  // 重置表单
-  form.id = null;
-  form.name = '';
-  form.gender = '';
-  form.birth_date = '';
-  form.id_card_no = '';
-  form.phone = '';
-  form.email = '';
-  form.education = '';
-  form.graduate_school = '';
-  form.major = '';
-  form.title = '';
-  form.work_years = 0;
-  form.work_start_date = '';
-  form.employment_date = '';
-  form.personnel_status = 1;
-  form.is_full_time = 1;
-  form.is_principal = 0;
-  form.work_experience = '';
-  form.project_experience = '';
-  dialogVisible.value = true;
+  // 跳转到编辑页面（不带id参数表示新增）
+  router.push('/personnel/edit');
 };
 
 // 编辑
-const handleEdit = async (row: any) => {
-  dialogType.value = 'edit';
-  try {
-    const res = await personnelApi.getById(row.id);
-    const data = res.data;
-    // 填充表单数据
-    form.id = data.id;
-    form.name = data.name || '';
-    form.gender = data.gender || '';
-    form.birth_date = data.birth_date || '';
-    form.id_card_no = data.id_card_no || '';
-    form.phone = data.phone || '';
-    form.email = data.email || '';
-    form.education = data.education || '';
-    form.graduate_school = data.graduate_school || '';
-    form.major = data.major || '';
-    form.title = data.title || '';
-    form.work_years = data.work_years || 0;
-    form.work_start_date = data.work_start_date || '';
-    form.employment_date = data.employment_date || '';
-    form.personnel_status = data.personnel_status !== undefined ? data.personnel_status : 1;
-    form.is_full_time = data.is_full_time !== undefined ? data.is_full_time : 1;
-    form.is_principal = data.is_principal !== undefined ? data.is_principal : 0;
-    form.work_experience = data.work_experience || '';
-    form.project_experience = data.project_experience || '';
-    dialogVisible.value = true;
-  } catch (error) {
-    ElMessage.error('获取人员详情失败');
-    console.error('获取人员详情失败:', error);
-  }
+const handleEdit = (row: any) => {
+  // 跳转到编辑页面
+  router.push({
+    path: '/personnel/edit',
+    query: { id: row.id }
+  });
+};
+
+// 详情
+const handleDetail = (row: any) => {
+  // 跳转到详情页面
+  router.push({
+    path: '/personnel/detail',
+    query: { id: row.id }
+  });
 };
 
 // 资质证书
@@ -457,28 +246,7 @@ const handleDelete = (id: number) => {
   });
 };
 
-// 提交表单
-const handleSubmit = async () => {
-  if (!formRef.value) return;
-  await formRef.value.validate(async (valid: boolean) => {
-    if (valid) {
-      try {
-        if (dialogType.value === 'add') {
-          await personnelApi.create(form);
-          ElMessage.success('新增成功');
-        } else {
-          await personnelApi.update(form);
-          ElMessage.success('编辑成功');
-        }
-        dialogVisible.value = false;
-        getPersonnelList();
-      } catch (error) {
-        ElMessage.error(dialogType.value === 'add' ? '新增失败' : '编辑失败');
-        console.error('提交失败:', error);
-      }
-    }
-  });
-};
+
 
 // 分页处理
 const handleSizeChange = (size: number) => {
@@ -505,8 +273,68 @@ onMounted(() => {
     margin-bottom: 20px;
   }
   
-  .personnel-table {
-    width: 100%;
+  .personnel-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .personnel-card {
+    background: #ffffff;
+    border: 1px solid #ebeef5;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px);
+    }
+    
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      
+      .name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #303133;
+        margin: 0;
+      }
+    }
+    
+    .card-body {
+      margin-bottom: 20px;
+      
+      .info-item {
+        display: flex;
+        margin-bottom: 8px;
+        
+        .label {
+          width: 80px;
+          color: #909399;
+          font-size: 14px;
+        }
+        
+        .value {
+          flex: 1;
+          color: #303133;
+          font-size: 14px;
+        }
+      }
+    }
+    
+    .card-footer {
+      display: flex;
+      justify-content: flex-start;
+      padding-top: 16px;
+      border-top: 1px solid #ebeef5;
+    }
   }
   
   .mb20 {

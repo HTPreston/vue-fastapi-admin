@@ -136,6 +136,36 @@ export const dynamicRoutes: Array<RouteRecordRaw> = [
 					icon: 'ele-Edit',
 				},
 			},
+			{
+				path: '/personnel/edit',
+				name: 'personnelEdit',
+				component: () => import('/src/views/personnel/PersonnelEdit.vue'),
+				meta: {
+					title: '编辑人员',
+					isLink: '',
+					isHide: true,
+					isKeepAlive: false,
+					isAffix: false,
+					isIframe: false,
+					roles: ['super_admin', 'admin', 'common'],
+					icon: 'ele-Edit',
+				},
+			},
+			{
+				path: '/personnel/detail',
+				name: 'personnelDetail',
+				component: () => import('/src/views/personnel/PersonnelDetail.vue'),
+				meta: {
+					title: '人员详情',
+					isLink: '',
+					isHide: true,
+					isKeepAlive: false,
+					isAffix: false,
+					isIframe: false,
+					roles: ['super_admin', 'admin', 'common'],
+					icon: 'ele-View',
+				},
+			},
 			
 			{
 				path: '/system',

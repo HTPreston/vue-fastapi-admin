@@ -1,9 +1,18 @@
 <template>
   <div class="qualification-edit-container">
-    <el-page-header @back="goBack" content="编辑资质证书" />
-    
-    <el-card class="edit-card" v-loading="loading">
-      <el-form :model="qualificationForm" :rules="qualificationRules" ref="qualificationFormRef" size="default" label-width="140px">
+    <z-card shadow="hover">
+      <template #header>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span>编辑资质证书</span>
+          <el-button type="primary" size="default" @click="handleSubmit" :loading="submitLoading">
+            <el-icon>
+              <ele-Check/>
+            </el-icon>
+            保存
+          </el-button>
+        </div>
+      </template>
+      <el-form :model="qualificationForm" :rules="qualificationRules" ref="qualificationFormRef" size="default" label-width="120px" v-loading="loading">
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="证书类型" prop="certificate_type">
@@ -16,7 +25,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="证书全称" prop="certificate_full_name">
@@ -29,7 +38,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="证书等级" prop="certificate_level">
@@ -42,7 +51,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="发证机构" prop="issue_organization">
@@ -58,7 +67,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="发证日期" prop="issue_date">
@@ -83,7 +92,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="专业有效期" prop="profession_validity">
@@ -91,13 +100,13 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="培训机构/评审组织" prop="training_institution">
+            <el-form-item label="培训机构/组织" prop="training_institution">
               <el-input v-model="qualificationForm.training_institution" placeholder="请输入培训机构/评审组织" clearable></el-input>
             </el-form-item>
           </el-col>
         </el-row>
-        
-        <el-form-item label="备注" prop="remark">
+
+        <el-form-item label="备注" prop="remark" class="remark-item">
           <el-input
             v-model="qualificationForm.remark"
             type="textarea"
@@ -105,13 +114,29 @@
             placeholder="请输入备注"
           />
         </el-form-item>
-        
-        <el-form-item>
-          <el-button type="primary" @click="handleSubmit" :loading="submitLoading">保 存</el-button>
-          <el-button @click="goBack">取 消</el-button>
+
+        <el-form-item label="上传证书" prop="certificate_path" class="upload-item">
+          <el-upload
+            class="certificate-uploader"
+            action="/api/file/upload"
+            :show-file-list="false"
+            :on-success="handleUploadSuccess"
+            :on-error="handleUploadError"
+            :before-upload="beforeUpload"
+            accept="image/*"
+          >
+            <template v-if="qualificationForm.certificate_path">
+              <img :src="qualificationForm.certificate_path" class="certificate-image-preview" @error="handleImageError" />
+            </template>
+            <div v-else class="upload-placeholder">
+              <el-icon><ele-Plus /></el-icon>
+              <div class="upload-text">点击上传证书图片</div>
+            </div>
+          </el-upload>
+          <div class="upload-tip">支持 JPG、PNG、GIF 格式，文件大小不超过 10MB</div>
         </el-form-item>
       </el-form>
-    </el-card>
+    </z-card>
   </div>
 </template>
 
@@ -144,6 +169,7 @@ const qualificationForm = reactive({
   valid_until: '',
   certificate_status: '有效',
   profession_validity: '',
+  certificate_path: '',
   training_institution: '',
   remark: ''
 });
@@ -173,6 +199,42 @@ const getQualificationDetail = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+// 图片上传成功回调
+const handleUploadSuccess = (response: any) => {
+  if (response.code === 200) {
+    qualificationForm.certificate_path = response.data.url;
+    ElMessage.success('图片上传成功');
+  } else {
+    ElMessage.error(response.message || '图片上传失败');
+  }
+};
+
+// 图片上传失败回调
+const handleUploadError = () => {
+  ElMessage.error('图片上传失败，请重试');
+};
+
+// 上传前校验
+const beforeUpload = (file: File) => {
+  const isImage = file.type.startsWith('image/');
+  const isLt10M = file.size / 1024 / 1024 < 10;
+
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件！');
+    return false;
+  }
+  if (!isLt10M) {
+    ElMessage.error('图片大小不能超过 10MB！');
+    return false;
+  }
+  return true;
+};
+
+// 图片加载错误处理
+const handleImageError = () => {
+  qualificationForm.certificate_path = '';
 };
 
 const handleSubmit = async () => {
@@ -206,10 +268,147 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .qualification-edit-container {
-  padding: 20px;
-  
-  .edit-card {
-    margin-top: 20px;
+  padding: 30px;
+  display: flex;
+  justify-content: center;
+  position: relative;
+
+  :deep(.el-card) {
+    width: 100%;
+    max-width: 1200px;
+  }
+
+  :deep(.el-card__body) {
+    height: auto;
+    min-height: auto;
+  }
+
+  :deep(.el-form) {
+    max-width: 1000px;
+    width: 100%;
+  }
+
+  :deep(.el-row) {
+    margin-bottom: 0;
+  }
+
+  :deep(.el-form-item) {
+    margin-bottom: 25px;
+    min-height: 50px;
+  }
+
+  :deep(.el-form-item__label) {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 36px;
+  }
+
+  :deep(.el-form-item__content) {
+    line-height: 36px;
+  }
+
+  :deep(.el-input) {
+    height: 36px;
+  }
+
+  :deep(.el-input__wrapper) {
+    padding: 0 12px;
+    height: 36px;
+  }
+
+  :deep(.el-select) {
+    height: 36px;
+  }
+
+  :deep(.el-select .el-input__wrapper) {
+    height: 36px;
+  }
+
+  :deep(.el-date-picker) {
+    width: 100%;
+    height: 36px;
+  }
+
+  :deep(.el-textarea) {
+    min-height: 100px;
+    height: 100px;
+    margin-top: 8px;
+  }
+
+  :deep(.el-textarea__inner) {
+    min-height: 100px;
+    height: 100px;
+  }
+
+  :deep(.remark-item) {
+    margin-bottom: 25px !important;
+
+    .el-textarea {
+      min-height: 100px !important;
+      height: 100px !important;
+    }
+
+    .el-textarea__inner {
+      min-height: 100px !important;
+      height: 100px !important;
+    }
+  }
+
+  :deep(.upload-item) {
+    margin-top: 0 !important;
+    margin-bottom: 25px !important;
+  }
+
+  :deep(.certificate-uploader) {
+    .el-upload {
+      border: 1px dashed var(--el-border-color);
+      border-radius: 6px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: var(--el-transition-duration-fast);
+      width: 300px;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:hover {
+        border-color: var(--el-color-primary);
+      }
+    }
+  }
+
+  .certificate-image-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--el-text-color-secondary);
+    width: 100%;
+    height: 100%;
+
+    .el-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+      color: var(--el-color-primary);
+    }
+
+    .upload-text {
+      font-size: 14px;
+    }
+  }
+
+  .upload-tip {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
   }
 }
 </style>

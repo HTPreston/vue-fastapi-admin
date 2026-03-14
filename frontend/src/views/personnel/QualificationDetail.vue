@@ -3,50 +3,129 @@
     <el-page-header @back="goBack" content="资质证书详情" />
     
     <el-card class="detail-card" v-loading="loading">
-      <el-descriptions title="基本信息" :column="2" border>
-        <el-descriptions-item label="姓名">{{ qualificationData.personnel_name }}</el-descriptions-item>
-        <el-descriptions-item label="证书类型">{{ qualificationData.certificate_type }}</el-descriptions-item>
-        <el-descriptions-item label="岗位名称">{{ qualificationData.certificate_title }}</el-descriptions-item>
-        <el-descriptions-item label="证书全称">{{ qualificationData.certificate_full_name }}</el-descriptions-item>
-        <el-descriptions-item label="证书编号">{{ qualificationData.certificate_no }}</el-descriptions-item>
-        <el-descriptions-item label="证书等级">{{ qualificationData.certificate_level }}</el-descriptions-item>
-        <el-descriptions-item label="证书专业">{{ qualificationData.certificate_profession }}</el-descriptions-item>
-        <el-descriptions-item label="证书状态">
-          <el-tag :type="qualificationData.certificate_status === '有效' ? 'success' : 'danger'">
-            {{ qualificationData.certificate_status }}
-          </el-tag>
-        </el-descriptions-item>
-      </el-descriptions>
+      <!-- 基本信息 -->
+      <div class="section-title">基本信息</div>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <div class="info-item">
+            <span class="info-label">姓名：</span>
+            <span class="info-value">{{ qualificationData.personnel_name }}</span>
+          </div>
+        </el-col>
+        <el-col :span="12">
+          <div class="info-item">
+            <span class="info-label">证书类型：</span>
+            <span class="info-value">{{ qualificationData.certificate_type }}</span>
+          </div>
+        </el-col>
+      </el-row>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <div class="info-item">
+            <span class="info-label">岗位名称：</span>
+            <span class="info-value">{{ qualificationData.certificate_title }}</span>
+          </div>
+        </el-col>
+        <el-col :span="12">
+          <div class="info-item">
+            <span class="info-label">证书全称：</span>
+            <span class="info-value">{{ qualificationData.certificate_full_name }}</span>
+          </div>
+        </el-col>
+      </el-row>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <div class="info-item">
+            <span class="info-label">证书编号：</span>
+            <span class="info-value">{{ qualificationData.certificate_no }}</span>
+          </div>
+        </el-col>
+        <el-col :span="12">
+          <div class="info-item">
+            <span class="info-label">证书等级：</span>
+            <span class="info-value">{{ qualificationData.certificate_level }}</span>
+          </div>
+        </el-col>
+      </el-row>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <div class="info-item">
+            <span class="info-label">证书专业：</span>
+            <span class="info-value">{{ qualificationData.certificate_profession }}</span>
+          </div>
+        </el-col>
+        <el-col :span="12">
+          <div class="info-item">
+            <span class="info-label">证书状态：</span>
+            <el-tag :type="qualificationData.certificate_status === '有效' ? 'success' : 'danger'">
+              {{ qualificationData.certificate_status }}
+            </el-tag>
+          </div>
+        </el-col>
+      </el-row>
+
+      <!-- 发证信息 -->
+      <div class="section-title" style="margin-top: 30px;">发证信息</div>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <div class="info-item">
+            <span class="info-label">发证机构：</span>
+            <span class="info-value">{{ qualificationData.issue_organization }}</span>
+          </div>
+        </el-col>
+        <el-col :span="12">
+          <div class="info-item">
+            <span class="info-label">发证日期：</span>
+            <span class="info-value">{{ qualificationData.issue_date }}</span>
+          </div>
+        </el-col>
+      </el-row>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <div class="info-item">
+            <span class="info-label">有效期至：</span>
+            <span class="info-value">{{ qualificationData.valid_until }}</span>
+          </div>
+        </el-col>
+        <el-col :span="12">
+          <div class="info-item">
+            <span class="info-label">专业有效期：</span>
+            <span class="info-value">{{ qualificationData.profession_validity }}</span>
+          </div>
+        </el-col>
+      </el-row>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <div class="info-item">
+            <span class="info-label">培训机构/评审组织：</span>
+            <span class="info-value">{{ qualificationData.training_institution }}</span>
+          </div>
+        </el-col>
+      </el-row>
+
+      <!-- 其他信息 -->
+      <div class="section-title" style="margin-top: 30px;">其他信息</div>
+      <el-row :gutter="20">
+        <el-col :span="24">
+          <div class="info-item">
+            <span class="info-label">备注：</span>
+            <span class="info-value">{{ qualificationData.remark || '无' }}</span>
+          </div>
+        </el-col>
+      </el-row>
       
-      <el-descriptions title="发证信息" :column="2" border style="margin-top: 20px;">
-        <el-descriptions-item label="发证机构">{{ qualificationData.issue_organization }}</el-descriptions-item>
-        <el-descriptions-item label="发证日期">{{ qualificationData.issue_date }}</el-descriptions-item>
-        <el-descriptions-item label="有效期至">{{ qualificationData.valid_until }}</el-descriptions-item>
-        <el-descriptions-item label="专业有效期">{{ qualificationData.profession_validity }}</el-descriptions-item>
-        <el-descriptions-item label="培训机构/评审组织" :span="2">
-          {{ qualificationData.training_institution }}
-        </el-descriptions-item>
-      </el-descriptions>
-      
-      <el-descriptions title="其他信息" :column="1" border style="margin-top: 20px;">
-        <el-descriptions-item label="备注">
-          {{ qualificationData.remark || '无' }}
-        </el-descriptions-item>
-      </el-descriptions>
-      
-      <div class="certificate-image" v-if="qualificationData.certificate_path" style="margin-top: 20px;">
+      <div class="certificate-image" style="margin-top: 20px;">
         <el-divider>证书图片</el-divider>
         <el-image
-          :src="qualificationData.certificate_path"
+          :src="qualificationData.certificate_path || defaultImage"
           fit="contain"
-          style="width: 100%; max-height: 500px;"
-          :preview-src-list="[qualificationData.certificate_path]"
+          style="width: 100%; height: 750px;"
+          :preview-src-list="[qualificationData.certificate_path || defaultImage]"
           preview-teleported
         >
           <template #error>
             <div class="image-slot">
-              <el-icon><ele-Picture /></el-icon>
-              <span>图片加载失败</span>
+              <img :src="defaultImage" style="width: 100%; height: 100%; object-fit: contain;" />
             </div>
           </template>
         </el-image>
@@ -60,6 +139,7 @@ import {reactive, ref, onMounted} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {ElMessage} from 'element-plus';
 import {useQualificationApi} from '/@/api/useSystemApi/personnel';
+import defaultCertificateImage from '/@/assets/img/图片示例.png';
 
 const route = useRoute();
 const router = useRouter();
@@ -85,6 +165,9 @@ const qualificationData = reactive({
   certificate_path: '',
   remark: ''
 });
+
+// 默认证书图片（使用本地图片）
+const defaultImage = defaultCertificateImage;
 
 const getQualificationDetail = async () => {
   loading.value = true;
@@ -120,23 +203,58 @@ onMounted(() => {
 <style scoped lang="scss">
 .qualification-detail-container {
   padding: 20px;
-  
+
   .detail-card {
     margin-top: 20px;
   }
-  
+
+  .section-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #303133;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e4e7ed;
+  }
+
+  .info-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    min-height: 40px;
+
+    .info-label {
+      color: #606266;
+      font-weight: 500;
+      min-width: 120px;
+      flex-shrink: 0;
+    }
+
+    .info-value {
+      color: #303133;
+      flex: 1;
+    }
+  }
+
+  .el-row {
+    margin-bottom: 0;
+  }
+
   .certificate-image {
+    width: 100%;
+    min-height: 750px;
+
     .image-slot {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       width: 100%;
-      height: 300px;
+      height: 750px;
       background-color: #f5f7fa;
       color: #909399;
       font-size: 14px;
-      
+
       .el-icon {
         font-size: 48px;
         margin-bottom: 10px;
