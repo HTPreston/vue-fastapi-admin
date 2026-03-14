@@ -58,8 +58,6 @@ const state = reactive<ParentViewState>({
   iframeList: [],
 });
 
-const wrapperMap = new Map()
-
 // 设置主界面切换动画
 const setTransitionName = computed(() => {
   return themeConfig.value.animation;
@@ -85,21 +83,11 @@ const getIframeListRoutes = async () => {
 
 
 const formatComponentInstance = (component: any, route: any) => {
-  let wrapper;
   if (component) {
-    const wrapperName = route.fullPath;
-    if (wrapperMap.has(wrapperName)) {
-      wrapper = wrapperMap.get(wrapperName);
-    } else {
-      wrapper = {
-        name: wrapperName,
-        render() {
-          return h(component);
-        },
-      };
-      wrapperMap.set(wrapperName, wrapper);
-    }
-    return h(wrapper);
+    // 每次都创建新的组件实例，避免页面嵌套问题
+    return h(component, {
+      key: route.fullPath + Math.random()
+    });
   }
 }
 

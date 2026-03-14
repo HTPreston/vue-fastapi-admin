@@ -151,12 +151,18 @@ const signInSuccess = (isNoPower: boolean) => {
     // 初始化登录成功时间问候语
     let currentTimeInfo = currentTime.value;
     // 登录成功，固定跳转到首页
-    router.push('/home');
+    // 使用 replace 方法避免浏览器历史记录中留下登录页面
+    // 同时强制刷新页面状态，避免页面嵌套问题
+    router.replace('/home');
     // 登录成功提示
     const signInText = '欢迎回来！';
     ElMessage.success(`${currentTimeInfo}，${signInText}`);
     // 添加 loading，防止第一次进入界面时出现短暂空白
     NextLoading.start();
+    // 强制刷新页面，确保页面状态完全重置
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
   }
   state.loading.signIn = false;
 };

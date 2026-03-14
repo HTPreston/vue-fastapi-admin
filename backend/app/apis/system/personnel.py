@@ -38,8 +38,8 @@ async def get_personnel_list(params: PersonnelQuery):
 
 
 @router.post('/get', description="根据ID获取人员信息")
-async def get_personnel_by_id(id: int):
-    data = await PersonnelService.get_by_id(id)
+async def get_personnel_by_id(params: PersonnelDel):
+    data = await PersonnelService.get_by_id(params.id)
     return await HttpResponse.success(data)
 
 
@@ -69,6 +69,6 @@ async def get_personnel_qualification_list(params: PersonnelQualificationCertifi
 
 
 @router.post('/qualification/get', description="根据ID获取员工资质证书")
-async def get_personnel_qualification_by_id(id: int):
-    data = await PersonnelQualificationCertificateService.get_by_id(id)
+async def get_personnel_qualification_by_id(params: PersonnelQualificationCertificateDel):
+    data = await PersonnelQualificationCertificateService.get_by_id(params.id)
     return await HttpResponse.success(data)

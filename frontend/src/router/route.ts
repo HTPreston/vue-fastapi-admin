@@ -106,6 +106,36 @@ export const dynamicRoutes: Array<RouteRecordRaw> = [
 					icon: 'ele-FolderAdd',
 				},
 			},
+			{
+				path: '/personnel/qualification-detail',
+				name: 'qualificationDetail',
+				component: () => import('/src/views/personnel/QualificationDetail.vue'),
+				meta: {
+					title: '资质证书详情',
+					isLink: '',
+					isHide: true,
+					isKeepAlive: false,
+					isAffix: false,
+					isIframe: false,
+					roles: ['super_admin', 'admin', 'common'],
+					icon: 'ele-Document',
+				},
+			},
+			{
+				path: '/personnel/qualification-edit',
+				name: 'qualificationEdit',
+				component: () => import('/src/views/personnel/QualificationEdit.vue'),
+				meta: {
+					title: '编辑资质证书',
+					isLink: '',
+					isHide: true,
+					isKeepAlive: false,
+					isAffix: false,
+					isIframe: false,
+					roles: ['super_admin', 'admin', 'common'],
+					icon: 'ele-Edit',
+				},
+			},
 			
 			{
 				path: '/system',

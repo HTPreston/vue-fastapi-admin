@@ -2,58 +2,73 @@
   <div class="qualification-dialog-container">
     <el-dialog
       draggable
-      title="资质证书管理"
       v-model="state.isShowDialog"
-      width="1000px"
+      width="900px"
+      :show-close="false"
       @close="handleClose"
     >
-      <div class="personnel-info">
-        <el-descriptions :column="3" border>
-          <el-descriptions-item label="姓名">{{ state.currentPersonnel.name }}</el-descriptions-item>
-          <el-descriptions-item label="性别">{{ state.currentPersonnel.gender }}</el-descriptions-item>
-          <el-descriptions-item label="手机号码">{{ state.currentPersonnel.phone }}</el-descriptions-item>
-        </el-descriptions>
-      </div>
+      <template #header>
+        <div class="dialog-header" style="margin-top: 10px;">
+          <span class="dialog-title" style="padding-left: 10px;">资质证书管理</span>
+          <el-button type="primary" @click="handleAdd" style="margin-right: 10px;">
+            <el-icon>
+              <ele-Plus/>
+            </el-icon>
+            新增资质证书
+          </el-button>
+        </div>
+      </template>
+
+      <hr style="opacity: 0.3; margin: 10px 0;"/>
       
-      <div class="qualification-actions" style="margin: 20px 0;">
-        <el-button type="primary" @click="handleAdd">
-          <el-icon>
-            <ele-Plus/>
-          </el-icon>
-          新增资质证书
-        </el-button>
-      </div>
-      
-      <div class="qualification-table">
-        <el-table :data="qualificationList" style="width: 100%" v-loading="loading">
-          <el-table-column prop="id" label="ID" width="80" />
-          <el-table-column prop="certificate_type" label="证书类型" width="120" />
-          <el-table-column prop="certificate_title" label="岗位名称" width="120" />
-          <el-table-column prop="certificate_full_name" label="证书全称" width="200" />
-          <el-table-column prop="certificate_no" label="证书编号" width="150" />
-          <el-table-column prop="certificate_level" label="证书等级" width="100" />
-          <el-table-column prop="certificate_profession" label="证书专业" width="120" />
-          <el-table-column prop="issue_organization" label="发证机构" width="150" />
-          <el-table-column prop="issue_date" label="发证日期" width="120" />
-          <el-table-column prop="valid_until" label="有效期至" width="120" />
-          <el-table-column prop="certificate_status" label="证书状态" width="100">
-            <template #default="scope">
-              <el-tag :type="scope.row.certificate_status === '有效' ? 'success' : 'danger'">
-                {{ scope.row.certificate_status }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="150" fixed="right">
-            <template #default="scope">
-              <el-button type="primary" size="small" @click="handleEdit(scope.row)">
-                编辑
-              </el-button>
-              <el-button type="danger" size="small" @click="handleDelete(scope.row.id)">
-                删除
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+      <div class="qualification-cards" v-loading="loading" style="margin-top: 20px;">
+        <el-empty v-if="!qualificationList || qualificationList.length === 0" description="暂无资质证书" />
+        <div v-else class="cards-container">
+          <el-card 
+            v-for="item in qualificationList" 
+            :key="item.id" 
+            class="qualification-card"
+            shadow="hover"
+            @click="handleCardClick(item)"
+          >
+            <div class="card-content">
+              <div class="card-header">
+                <div class="personnel-name">{{ item.personnel_name }}</div>
+                <el-tag :type="item.certificate_status === '有效' ? 'success' : 'danger'" size="small">
+                  {{ item.certificate_status }}
+                </el-tag>
+              </div>
+              
+              <div class="card-body">
+                <div class="info-row">
+                  <span class="label">证书类型：</span>
+                  <span class="value">{{ item.certificate_type }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="label">岗位名称：</span>
+                  <span class="value">{{ item.certificate_title }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="label">证书等级：</span>
+                  <span class="value">{{ item.certificate_level }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="label">发证日期：</span>
+                  <span class="value">{{ item.issue_date }}</span>
+                </div>
+              </div>
+              
+              <div class="card-actions" @click.stop>
+                <el-button type="primary" size="small" @click="handleEdit(item)">
+                  修改
+                </el-button>
+                <el-button type="danger" size="small" @click="handleDelete(item.id)">
+                  删除
+                </el-button>
+              </div>
+            </div>
+          </el-card>
+        </div>
       </div>
     </el-dialog>
     
@@ -183,9 +198,31 @@
 import {reactive, ref} from 'vue';
 import {ElMessage, ElMessageBox} from 'element-plus';
 import {useQualificationApi} from '/@/api/useSystemApi/personnel';
+import {useRouter} from 'vue-router';
+
+interface QualificationItem {
+  id: number;
+  personnel_id: number;
+  personnel_name: string;
+  certificate_type: string;
+  certificate_title: string;
+  certificate_full_name: string;
+  certificate_no: string;
+  certificate_level: string;
+  certificate_profession: string;
+  issue_organization: string;
+  issue_date: string;
+  valid_until: string;
+  certificate_status: string;
+  profession_validity: string;
+  training_institution: string;
+  certificate_path: string;
+  remark: string;
+}
 
 const qualificationFormRef = ref();
 const qualificationApi = useQualificationApi();
+const router = useRouter();
 
 const state = reactive({
   isShowDialog: false,
@@ -195,7 +232,7 @@ const state = reactive({
 
 const loading = ref(false);
 const qualificationDialogType = ref('add');
-const qualificationList = ref([]);
+const qualificationList = ref<QualificationItem[]>([]);
 
 const createQualificationForm = () => {
   return {
@@ -258,11 +295,14 @@ const handleAdd = () => {
   state.isShowQualificationDialog = true;
 };
 
-const handleEdit = (row: any) => {
-  qualificationDialogType.value = 'edit';
-  const copiedRow = JSON.parse(JSON.stringify(row));
-  Object.assign(qualificationForm, copiedRow);
-  state.isShowQualificationDialog = true;
+const handleEdit = (item: any) => {
+  router.push({
+    path: '/personnel/qualification-edit',
+    query: {
+      id: item.id,
+      personnel_id: item.personnel_id
+    }
+  });
 };
 
 const handleDelete = (id: number) => {
@@ -281,6 +321,16 @@ const handleDelete = (id: number) => {
     }
   }).catch(() => {
     // 取消删除
+  });
+};
+
+const handleCardClick = (item: any) => {
+  router.push({
+    path: '/personnel/qualification-detail',
+    query: {
+      id: item.id,
+      personnel_id: item.personnel_id
+    }
   });
 };
 
@@ -322,22 +372,99 @@ defineExpose({
 
 <style scoped lang="scss">
 .qualification-dialog-container {
-  .personnel-info {
-    margin-bottom: 20px;
-  }
-  
-  .qualification-actions {
+  .dialog-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%;
+    
+    .dialog-title {
+      font-size: 18px;
+      font-weight: 500;
+      color: #303133;
+    }
   }
   
-  .qualification-table {
+  .qualification-cards {
     width: 100%;
+    min-height: 200px;
+  }
+  
+  .cards-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  
+  .qualification-card {
+    cursor: pointer;
+    transition: all 0.3s;
+    
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    }
+    
+    .card-content {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #ebeef5;
+      
+      .personnel-name {
+        font-size: 16px;
+        font-weight: bold;
+        color: #303133;
+      }
+    }
+    
+    .card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 15px;
+      
+      .info-row {
+        display: flex;
+        align-items: center;
+        
+        .label {
+          color: #909399;
+          font-size: 14px;
+          min-width: 80px;
+        }
+        
+        .value {
+          color: #303133;
+          font-size: 14px;
+          flex: 1;
+        }
+      }
+    }
+    
+    .card-actions {
+      display: flex;
+      gap: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #ebeef5;
+      
+      .el-button {
+        flex: 1;
+      }
+    }
   }
   
   :deep(.el-dialog__body) {
-    max-height: 600px;
+    max-height: 700px;
     overflow-y: auto;
   }
 }
