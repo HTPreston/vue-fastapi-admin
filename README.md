@@ -36,16 +36,16 @@ python main.py
 # 异步任务依赖 celery 启动命令
 
 #  windows 启动，只能单线程 HTHC/backend 目录下执行
-celery -A celery_worker.worker.celery worker --pool=solo -l INFO 
+# celery -A celery_worker.worker.celery worker --pool=solo -l INFO 
 
 # linux 启动
-elery -A celery_worker.worker.celery worker --loglevel=INFO -c 10 -P solo -n HTHC-celery-worker
+# elery -A celery_worker.worker.celery worker --loglevel=INFO -c 10 -P solo -n HTHC-celery-worker
 
 # 定时任务启动
-celery -A celery_worker.worker.celery beat -S celery_worker.scheduler.schedulers:DatabaseScheduler -l INFO
+# celery -A celery_worker.worker.celery beat -S celery_worker.scheduler.schedulers:DatabaseScheduler -l INFO
 
 # 定时任务心跳启动
-celery -A celery_worker.worker.celery beat  -l INFO 
+# celery -A celery_worker.worker.celery beat  -l INFO 
 
 ```
 

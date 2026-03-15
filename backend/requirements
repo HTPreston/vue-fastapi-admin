@@ -13,8 +13,8 @@ asyncmy==0.2.7
 PyMySQL==1.0.2
 
 # 异步相关
-anyio==3.6.2
-async-timeout
+; anyio==3.6.2
+; async-timeout
 
 # 工具库
 loguru==0.6.0

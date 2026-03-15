@@ -35,8 +35,8 @@ async def get_list(params: CompanyInfoQuery):
 
 
 @router.post('/get', description="根据ID获取公司信息")
-async def get_by_id(id: int):
-    data = await CompanyInfoService.get_by_id(id)
+async def get_by_id(params: CompanyInfoDel):
+    data = await CompanyInfoService.get_by_id(params.id)
     return await HttpResponse.success(data)
 
 
@@ -66,8 +66,8 @@ async def get_qualification_list(params: CompanyQualificationCertificateQuery):
 
 
 @router.post('/qualification/get', description="根据ID获取公司资质证书")
-async def get_qualification_by_id(id: int):
-    data = await CompanyQualificationCertificateService.get_by_id(id)
+async def get_qualification_by_id(params: CompanyQualificationCertificateDel):
+    data = await CompanyQualificationCertificateService.get_by_id(params.id)
     return await HttpResponse.success(data)
 
 

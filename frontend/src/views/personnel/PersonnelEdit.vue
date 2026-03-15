@@ -288,13 +288,11 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   position: relative;
-  min-height: 100vh;
 }
 
-.personnel-edit-container .el-card {
+.personnel-edit-container :deep(.el-card) {
   width: 100%;
   max-width: 1200px;
-  margin-bottom: 80px; /* 为固定按钮留出空间 */
 }
 
 .personnel-edit-container :deep(.el-card__body) {
@@ -352,7 +350,7 @@ onMounted(() => {
 
 .personnel-edit-container :deep(.textarea-item) .el-textarea {
   min-height: auto;
-  margin-bottom: 25px;
+  padding-bottom: 5px;
 }
 
 .personnel-edit-container :deep(.textarea-item) .el-textarea__inner {

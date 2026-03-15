@@ -34,6 +34,6 @@ async def get_list(params: BidSubmissionPersonnelQuery):
 
 
 @router.post('/get', description="根据ID获取投标绑定人员")
-async def get_by_id(id: int):
-    data = await BidSubmissionPersonnelService.get_by_id(id)
+async def get_by_id(params: BidSubmissionPersonnelDel):
+    data = await BidSubmissionPersonnelService.get_by_id(params.id)
     return await HttpResponse.success(data)

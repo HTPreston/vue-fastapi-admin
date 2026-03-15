@@ -281,6 +281,7 @@ onMounted(() => {
   :deep(.el-card__body) {
     height: auto;
     min-height: auto;
+    padding-bottom: 20px;
   }
 
   :deep(.el-form) {
@@ -327,17 +328,6 @@ onMounted(() => {
   :deep(.el-date-picker) {
     width: 100%;
     height: 36px;
-  }
-
-  :deep(.el-textarea) {
-    min-height: 100px;
-    height: 100px;
-    margin-top: 8px;
-  }
-
-  :deep(.el-textarea__inner) {
-    min-height: 100px;
-    height: 100px;
   }
 
   :deep(.remark-item) {

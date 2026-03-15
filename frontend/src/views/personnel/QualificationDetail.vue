@@ -206,6 +206,7 @@ onMounted(() => {
 
   .detail-card {
     margin-top: 20px;
+    border-radius: 8px;
   }
 
   .section-title {

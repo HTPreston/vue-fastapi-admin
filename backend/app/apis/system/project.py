@@ -33,6 +33,6 @@ async def get_list(params: ProjectQuery):
 
 
 @router.post('/get', description="根据ID获取项目信息")
-async def get_by_id(id: int):
-    data = await ProjectService.get_by_id(id)
+async def get_by_id(params: ProjectDel):
+    data = await ProjectService.get_by_id(params.id)
     return await HttpResponse.success(data)
