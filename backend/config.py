@@ -46,35 +46,7 @@ class Configs(BaseSettings):
     # dir
     BASEDIR: str = os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
-    # celery
-    broker_url: str = Field(..., validation_alias="CELERY_BROKER_URL")
-    result_backend: str = Field(..., validation_alias="CELERY_RESULT_BACKEND")
-    accept_content: typing.List[str] = ["json"]
-    result_serializer: str = "json"
-    timezone: str = "Asia/Shanghai"
-    enable_utc: bool = False
-    # 并发工作进程/线程/绿色线程执行任务的数量 默认10
-    worker_concurrency: int = 10
-    # 一次预取多少消息乘以并发进程数 默认4
-    worker_prefetch_multiplier: int = 4
-    # 池工作进程在被新任务替换之前可以执行的最大任务数。默认是没有限制
-    worker_max_tasks_per_child: int = 100
-    # 连接池中可以打开的最大连接数 默认10
-    broker_pool_limit: int = 10
-    # 传递给底层传输的附加选项的字典。设置可见性超时的示例（Redis 和 SQS 传输支持）
-    result_backend_transport_options: typing.Dict[str, typing.Any] = {'visibility_timeout': 3600}
-    include: typing.List[typing.Any] = [
-        'celery_worker.tasks.common',
-    ]
-    # task_queues = (
-    #     Queue("case", )
-    # )
     TEST_FILES_DIR: str = os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(__file__))), 'files')
-
-    task_run_pool: int = 3
-
-    # celery beat
-    beat_db_uri: str = Field(..., validation_alias="CELERY_BEAT_DB_URL")
 
     model_config = SettingsConfigDict(case_sensitive=True, env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

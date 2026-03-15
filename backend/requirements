@@ -24,9 +24,6 @@ cryptography==40.0.2
 requests==2.28.2
 python-dotenv==1.0.0
 
-# 任务队列
-celery==5.2.7
-
 # 文件处理
 aiofiles==23.1.0
 
