@@ -1,3 +1,36 @@
-*.ts linguist-language=python
-*.js linguist-language=python
-*.html linguist-language=python
+# Line endings
+* text=auto
+*.sh text eol=lf
+
+# Source code
+*.py text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.vue text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg text eol=lf
+*.ttf binary
+*.woff binary
+*.woff2 binary
+*.eot binary
+*.pdf binary
+*.zip binary
+
+# Linguist
+*.vue linguist-language=Vue
+*.md linguist-documentation
+frontend/node_modules/** linguist-vendored
+backend/venv/** linguist-vendored
